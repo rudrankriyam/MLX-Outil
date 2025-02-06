@@ -1,6 +1,6 @@
-# MLX-Outil (WORK IN PROGRESS: TOOLS IS NOT IMPLEMENTED IN MLX SWIFT YET)
+# MLX-Outil
 
-MLX Outil is a multiplatform Swift project to show tool usage with Llama 3.2 1B and 3B models using MLX Swift. The project showcases how to implement and use tool calling capabilities across iOS, macOS, and visionOS platforms.
+MLX Outil is a multiplatform Swift project to show tool usage with Llama 3.2 3B model using MLX Swift across iOS, macOS, and visionOS platforms.
 
 ![Platforms](https://img.shields.io/badge/Platforms-iOS%2016.0+%20|%20macOS%2013.0+%20|%20visionOS%201.0+-lightgrey)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange)
@@ -8,13 +8,12 @@ MLX Outil is a multiplatform Swift project to show tool usage with Llama 3.2 1B 
 
 ## Features
 
-- Tool calling demonstrations using Llama 3.2 1B and 3B models
+- Tool use demonstrations using Llama 3.2 3B model
 - Cross-platform support (iOS, macOS, visionOS)
 - On-device inference using MLX Swift
 - Example tools implementation:
-  - Calculator functions
-  - Web search simulation
-  - Custom tool creation examples
+  - Weather information
+  - Web search simulation [pending]
 
 ## Requirements
 
