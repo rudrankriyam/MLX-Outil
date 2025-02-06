@@ -32,8 +32,8 @@ struct ContentView: View {
                 ScrollView(.vertical) {
                     ScrollViewReader { sp in
                         Group {
-                                Text(llm.output)
-                                    .textSelection(.enabled)
+                            Text(llm.output)
+                                .textSelection(.enabled)
                         }
                         .onChange(of: llm.output) { _, _ in
                             sp.scrollTo("bottom")
@@ -46,14 +46,17 @@ struct ContentView: View {
                 }
 
                 HStack {
-                    TextField("Ask something about your health data...", text: $prompt)
-                        .lineLimit(2, reservesSpace: true)
-                        .textFieldStyle(.plain)
-                        .onSubmit(generate)
-                        .disabled(llm.running)
-                        #if os(visionOS)
-                            .textFieldStyle(.roundedBorder)
-                        #endif
+                    TextField(
+                        "Ask something about your health data...",
+                        text: $prompt
+                    )
+                    .lineLimit(2, reservesSpace: true)
+                    .textFieldStyle(.plain)
+                    .onSubmit(generate)
+                    .disabled(llm.running)
+                    #if os(visionOS)
+                        .textFieldStyle(.roundedBorder)
+                    #endif
 
                     Button(action: generate) {
                         Image(systemName: "arrow.up.circle.fill")
@@ -77,7 +80,8 @@ struct ContentView: View {
             #endif
             .navigationTitle("HealthSeek")
             .task {
-                self.prompt = "Summary of my workouts this week, and how I did in them."
+                self.prompt =
+                    "Summary of my workouts this week, and how I did in them."
                 _ = try? await llm.load()
             }
         }
@@ -112,19 +116,9 @@ class LLMEvaluator {
     var stat = ""
 
     var toolCallState: ToolCallParsingState = .idle
-
-    /// This controls which model loads. `qwen2_5_1_5b` is one of the smaller ones, so this will fit on
-    /// more devices.
     let modelConfiguration = ModelRegistry.qwen2_5_1_5b
 
-    /// parameters controlling the output
-    let generateParameters = GenerateParameters(temperature: 0.6)
-    let maxTokens = 4800
-
-    /// update the display every N tokens -- 4 looks like it updates continuously
-    /// and is low overhead.  observed ~15% reduction in tokens/s when updating
-    /// on every token
-    let displayEveryNTokens = 4
+    let generateParameters = GenerateParameters(temperature: 0.5)
 
     enum LoadState {
         case idle
@@ -149,12 +143,9 @@ class LLMEvaluator {
 
     let healthStore = HKHealthStore()
 
-    /// load and return the model -- can be called multiple times, subsequent calls will
-    /// just return the loaded model
     func load() async throws -> ModelContainer {
         switch loadState {
         case .idle:
-            // limit the buffer cache
             MLX.GPU.set(cacheLimit: 20 * 1024 * 1024)
 
             let modelContainer = try await LLMModelFactory.shared.loadContainer(
@@ -170,7 +161,9 @@ class LLMEvaluator {
                 context.model.numParameters()
             }
 
-            print("Loaded \(modelConfiguration.id).  Weights: \(numParams / (1024*1024))M")
+            print(
+                "Loaded \(modelConfiguration.id).  Weights: \(numParams / (1024*1024))M"
+            )
             loadState = .loaded(modelContainer)
             return modelContainer
 
@@ -186,12 +179,16 @@ class LLMEvaluator {
 
         let workoutType = HKObjectType.workoutType()
 
-        let authorizationStatus = healthStore.authorizationStatus(for: workoutType)
+        let authorizationStatus = healthStore.authorizationStatus(
+            for: workoutType
+        )
         if authorizationStatus != .sharingAuthorized {
             do {
-                try await healthStore.requestAuthorization(toShare: [], read: [workoutType])
+                try await healthStore
+                    .requestAuthorization(toShare: [], read: [workoutType])
             } catch {
-                return "Failed to get HealthKit authorization: \(error.localizedDescription)"
+                return
+                    "Failed to get HealthKit authorization: \(error.localizedDescription)"
             }
         }
 
@@ -215,7 +212,8 @@ class LLMEvaluator {
         let workouts = try await withCheckedThrowingContinuation {
             (continuation: CheckedContinuation<[HKWorkout], Error>) in
             let query = HKSampleQuery(
-                sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit,
+                sampleType: workoutType, predicate: predicate,
+                limit: HKObjectQueryNoLimit,
                 sortDescriptors: nil
             ) { _, samples, error in
                 if let error = error {
@@ -240,8 +238,21 @@ class LLMEvaluator {
 
         for workout in workouts {
             let duration = workout.duration
-            let calories = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0
-            let distance = workout.totalDistance?.doubleValue(for: .meter()) ?? 0
+
+            let activeEnergyBurnedType = HKQuantityType(.activeEnergyBurned)
+            let calories: Double
+            if let statistics = workout.statistics(for: activeEnergyBurnedType),
+                let sum = statistics.sumQuantity()
+            {
+                calories = sum.doubleValue(for: .kilocalorie())
+            } else {
+                calories = 0
+            }
+
+            let distance =
+                workout.totalDistance?.doubleValue(
+                    for: .meter()
+                ) ?? 0
 
             totalDuration += duration
             totalCalories += calories
@@ -275,14 +286,15 @@ class LLMEvaluator {
                 if let startRange = text.range(of: "<tool_call>") {
                     let afterStart = text[startRange.upperBound...]
                     if let endRange = afterStart.range(of: "</tool_call>") {
-                        let jsonString = String(afterStart[..<endRange.lowerBound])
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replacingOccurrences(of: "{{", with: "{")
-                            .replacingOccurrences(of: "}}", with: "}")
-                            // Ensure the JSON object is properly closed
-                            .replacingOccurrences(of: "}", with: "}}")
-                            .replacingOccurrences(of: "}}}}", with: "}}")
-                        print("Processing JSON: \(jsonString)")  // Debug print
+                        let jsonString = String(
+                            afterStart[..<endRange.lowerBound]
+                        )
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .replacingOccurrences(of: "{{", with: "{")
+                        .replacingOccurrences(of: "}}", with: "}")
+                        .replacingOccurrences(of: "}", with: "}}")
+                        .replacingOccurrences(of: "}}}}", with: "}}")
+                        print("Processing JSON: \(jsonString)")
                         await handleToolCall(jsonString)
                         toolCallState = .idle
                     } else {
@@ -291,15 +303,17 @@ class LLMEvaluator {
                 }
             case .buffering(let currentBuffer):
                 if let endRange = text.range(of: "</tool_call>") {
-                    let jsonString = (currentBuffer + String(text[..<endRange.lowerBound]))
+                    let jsonString =
+                        (currentBuffer + String(text[..<endRange.lowerBound]))
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                         .replacingOccurrences(of: "{{", with: "{")
                         .replacingOccurrences(of: "}}", with: "}")
                         .replacingOccurrences(of: "<tool_call>", with: "")
-                        // Ensure the JSON object is properly closed
                         .replacingOccurrences(of: "}", with: "}}")
                         .replacingOccurrences(of: "}}}}", with: "}}")
-                    print("Processing buffered JSON: \(jsonString)")  // Debug print
+                    print(
+                        "Processing buffered JSON: \(jsonString)"
+                    )  // Debug print
                     await handleToolCall(jsonString)
                     toolCallState = .idle
                 } else {
@@ -314,14 +328,12 @@ class LLMEvaluator {
     /// Clean up and parse the tool call JSON.
     @MainActor
     func handleToolCall(_ rawBlock: String) async {
-        // Clean up and validate JSON structure
         let cleanedJSON =
             rawBlock
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "<tool_call>", with: "")
             .replacingOccurrences(of: "</tool_call>", with: "")
 
-        // Ensure the JSON string is properly formatted
         if !cleanedJSON.hasPrefix("{") || !cleanedJSON.hasSuffix("}") {
             print("Invalid JSON format: \(cleanedJSON)")
             return
@@ -333,7 +345,8 @@ class LLMEvaluator {
         }
 
         do {
-            if let toolCall = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            if let toolCall = try JSONSerialization.jsonObject(with: data)
+                as? [String: Any],
                 let name = toolCall["name"] as? String
             {
                 print("Successfully parsed tool call with name: \(name)")
@@ -344,7 +357,8 @@ class LLMEvaluator {
             }
         } catch {
             print("Error parsing tool call JSON: \(error)")
-            self.output += "\nError parsing tool call: \(error.localizedDescription)\n"
+            self.output +=
+                "\nError parsing tool call: \(error.localizedDescription)\n"
         }
     }
 
@@ -355,20 +369,30 @@ class LLMEvaluator {
 
         let workoutType = HKObjectType.workoutType()
 
-        let authorizationStatus = healthStore.authorizationStatus(for: workoutType)
+        let authorizationStatus = healthStore.authorizationStatus(
+            for: workoutType
+        )
         if authorizationStatus != .sharingAuthorized {
             do {
-                try await healthStore.requestAuthorization(toShare: [], read: [workoutType])
+                try await healthStore
+                    .requestAuthorization(toShare: [], read: [workoutType])
             } catch {
-                return "Failed to get HealthKit authorization: \(error.localizedDescription)"
+                return
+                    "Failed to get HealthKit authorization: \(error.localizedDescription)"
             }
         }
 
         let calendar = Calendar.current
         let now = Date()
         let startOfWeek = calendar.date(
-            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))!
-        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)!
+            from:
+                calendar
+                .dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))!
+        let endOfWeek = calendar.date(
+            byAdding: .day,
+            value: 7,
+            to: startOfWeek
+        )!
 
         let predicate = HKQuery.predicateForSamples(
             withStart: startOfWeek,
@@ -379,7 +403,8 @@ class LLMEvaluator {
         let workouts = try await withCheckedThrowingContinuation {
             (continuation: CheckedContinuation<[HKWorkout], Error>) in
             let query = HKSampleQuery(
-                sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit,
+                sampleType: workoutType, predicate: predicate,
+                limit: HKObjectQueryNoLimit,
                 sortDescriptors: nil
             ) { _, samples, error in
                 if let error = error {
@@ -397,7 +422,6 @@ class LLMEvaluator {
             return "No workouts found for this week."
         }
 
-        // Group workouts by day
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "EEEE"  // Day name (e.g., "Monday")
 
@@ -412,7 +436,6 @@ class LLMEvaluator {
             workoutsByDay[dayName]?.append(workout)
         }
 
-        // Sort days according to calendar order
         let sortedDays = workoutsByDay.keys.sorted { day1, day2 in
             let index1 = calendar.component(
                 .weekday, from: dateFormatter.date(from: day1) ?? Date())
@@ -426,17 +449,21 @@ class LLMEvaluator {
             for workout in workoutsByDay[day] ?? [] {
                 let duration = workout.duration
 
-                // Replace the deprecated totalEnergyBurned with statistics(for:)
                 let activeEnergyBurnedType = HKQuantityType(.activeEnergyBurned)
                 let calories: Double
-                if let statistics =  workout.statistics(for: activeEnergyBurnedType), let sum = statistics.sumQuantity() {
+                if let statistics = workout.statistics(
+                    for: activeEnergyBurnedType),
+                    let sum = statistics.sumQuantity()
+                {
                     calories = sum.doubleValue(for: .kilocalorie())
                 } else {
                     calories = 0
                 }
 
-                // Check if totalDistance is also deprecated and update if necessary
-                let distance = workout.totalDistance?.doubleValue(for: .meter()) ?? 0
+                let distance =
+                    workout.totalDistance?.doubleValue(
+                        for: .meter()
+                    ) ?? 0
 
                 summary +=
                     "\n- \(formatDuration(duration)), \(Int(calories)) kcal, \(formatDistance(distance))"
@@ -450,7 +477,9 @@ class LLMEvaluator {
     func generationDidComplete() async {
         if case .buffering(let currentBuffer) = toolCallState {
             print("Generation complete with remaining buffer: \(currentBuffer)")
-            let trimmedBuffer = currentBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmedBuffer = currentBuffer.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
             if !trimmedBuffer.isEmpty {
                 await handleToolCall(trimmedBuffer)
             }
@@ -490,21 +519,19 @@ class LLMEvaluator {
                             ],
                             ["role": "user", "content": prompt],
                         ], tools: [healthToolSpec]))
+
                 return try MLXLMCommon.generate(
-                    input: input, parameters: generateParameters, context: context
+                    input: input, parameters: generateParameters,
+                    context: context
                 ) { tokens in
-                    if tokens.count % displayEveryNTokens == 0 {
+                    if tokens.count % 2 == 0 {
                         let text = context.tokenizer.decode(tokens: tokens)
                         Task { @MainActor in
-                            // Remove debug print
                             print("Text: \(text)")
                         }
                     }
-                    if tokens.count >= maxTokens {
-                        return .stop
-                    } else {
-                        return .more
-                    }
+                    return .more
+
                 }
             }
             print("Generated: \(result.output)")
@@ -542,26 +569,20 @@ class LLMEvaluator {
                             ["role": "user", "content": prompt],
                         ]))
                 return try MLXLMCommon.generate(
-                    input: input, parameters: generateParameters, context: context
+                    input: input, parameters: generateParameters,
+                    context: context
                 ) { tokens in
                     if tokens.count % 2 == 0 {
                         let text = context.tokenizer.decode(tokens: tokens)
                         Task { @MainActor in
-                            // Remove debug print
-                          //  withAnimation(.easeInOut(duration: 0.5)) {
-                                self.output = text
-                           // }
+                            self.output = text
                         }
                     }
-                    if tokens.count >= maxTokens {
-                        return .stop
-                    } else {
-                        return .more
-                    }
+
+                    return .more
                 }
             }
             print("Generated: \(result.output)")
-            // Remove duplicate output processing
         } catch {
             output = "Failed: \(error)"
         }
