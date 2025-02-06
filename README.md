@@ -1,4 +1,4 @@
-# MLX-Outil
+# MLX Outil
 
 MLX Outil is a multiplatform Swift project to show tool usage with Llama 3.2 3B model using MLX Swift across iOS, macOS, and visionOS platforms.
 

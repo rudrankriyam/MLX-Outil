@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0AC2A3942CFBB47F003BBA39 /* LLM in Frameworks */ = {isa = PBXBuildFile; productRef = 0AC2A3932CFBB47F003BBA39 /* LLM */; };
+		0A8AD9F62D5553A900FC35B5 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 0A8AD9F52D5553A900FC35B5 /* MLXLLM */; };
+		0A8AD9F82D5553A900FC35B5 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 0A8AD9F72D5553A900FC35B5 /* MLXLMCommon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +28,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0AC2A3942CFBB47F003BBA39 /* LLM in Frameworks */,
+				0A8AD9F82D5553A900FC35B5 /* MLXLMCommon in Frameworks */,
+				0A8AD9F62D5553A900FC35B5 /* MLXLLM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +72,8 @@
 			);
 			name = "MLX Outil";
 			packageProductDependencies = (
-				0AC2A3932CFBB47F003BBA39 /* LLM */,
+				0A8AD9F52D5553A900FC35B5 /* MLXLLM */,
+				0A8AD9F72D5553A900FC35B5 /* MLXLMCommon */,
 			);
 			productName = "MLX Outil";
 			productReference = 0AC155662CFBB30E00FBDD8E /* MLX Outil.app */;
@@ -101,7 +104,7 @@
 			mainGroup = 0AC1555D2CFBB30E00FBDD8E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				0AC2A3922CFBB47F003BBA39 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
+				0A8AD9F42D5553A900FC35B5 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0AC155672CFBB30E00FBDD8E /* Products */;
@@ -350,21 +353,26 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		0AC2A3922CFBB47F003BBA39 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
+		0A8AD9F42D5553A900FC35B5 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples/";
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.18.1;
+				branch = main;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		0AC2A3932CFBB47F003BBA39 /* LLM */ = {
+		0A8AD9F52D5553A900FC35B5 /* MLXLLM */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 0AC2A3922CFBB47F003BBA39 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
-			productName = LLM;
+			package = 0A8AD9F42D5553A900FC35B5 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLLM;
+		};
+		0A8AD9F72D5553A900FC35B5 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A8AD9F42D5553A900FC35B5 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLMCommon;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
