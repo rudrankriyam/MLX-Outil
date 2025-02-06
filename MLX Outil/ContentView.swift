@@ -535,7 +535,6 @@ class LLMEvaluator {
                 }
             }
             print("Generated: \(result.output)")
-            // Remove duplicate output processing
             await processLLMOutput(result.output)
         } catch {
             output = "Failed: \(error)"
