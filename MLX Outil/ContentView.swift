@@ -425,7 +425,17 @@ class LLMEvaluator {
             summary += "\n\n📅 \(day):"
             for workout in workoutsByDay[day] ?? [] {
                 let duration = workout.duration
-                let calories = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0
+
+                // Replace the deprecated totalEnergyBurned with statistics(for:)
+                let activeEnergyBurnedType = HKQuantityType(.activeEnergyBurned)
+                let calories: Double
+                if let statistics =  workout.statistics(for: activeEnergyBurnedType), let sum = statistics.sumQuantity() {
+                    calories = sum.doubleValue(for: .kilocalorie())
+                } else {
+                    calories = 0
+                }
+
+                // Check if totalDistance is also deprecated and update if necessary
                 let distance = workout.totalDistance?.doubleValue(for: .meter()) ?? 0
 
                 summary +=
