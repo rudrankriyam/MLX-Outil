@@ -48,7 +48,7 @@ class LLMEvaluator {
             ] as [String: any Sendable],
         ] as [String: any Sendable]
 
-    let healthStore = HKHealthStore()
+    private let healthManager = HealthKitManager.shared
 
     func load() async throws -> ModelContainer {
         switch loadState {
@@ -80,25 +80,6 @@ class LLMEvaluator {
     }
 
     func fetchHealthData(date: String) async throws -> String {
-        guard HKHealthStore.isHealthDataAvailable() else {
-            return "HealthKit is not available on this device."
-        }
-
-        let workoutType = HKObjectType.workoutType()
-
-        let authorizationStatus = healthStore.authorizationStatus(
-            for: workoutType
-        )
-        if authorizationStatus != .sharingAuthorized {
-            do {
-                try await healthStore
-                    .requestAuthorization(toShare: [], read: [workoutType])
-            } catch {
-                return
-                    "Failed to get HealthKit authorization: \(error.localizedDescription)"
-            }
-        }
-
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
 
@@ -106,84 +87,14 @@ class LLMEvaluator {
             return "Invalid date format. Please use YYYY-MM-DD format."
         }
 
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: queryDate)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-
-        let predicate = HKQuery.predicateForSamples(
-            withStart: startOfDay,
-            end: endOfDay,
-            options: .strictStartDate
-        )
-
-        let workouts = try await withCheckedThrowingContinuation {
-            (continuation: CheckedContinuation<[HKWorkout], Error>) in
-            let query = HKSampleQuery(
-                sampleType: workoutType, predicate: predicate,
-                limit: HKObjectQueryNoLimit,
-                sortDescriptors: nil
-            ) { _, samples, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else if let workouts = samples as? [HKWorkout] {
-                    continuation.resume(returning: workouts)
-                } else {
-                    continuation.resume(returning: [])
-                }
-            }
-            healthStore.execute(query)
-        }
-
+        let workouts = try await healthManager.fetchWorkouts(
+            for: .day(queryDate))
         if workouts.isEmpty {
             return "No workouts found for \(date)."
         }
 
-        var summary = "Workout Summary for \(date):\n"
-        var totalDuration = TimeInterval(0)
-        var totalCalories = Double(0)
-        var totalDistance = Double(0)
-
-        for workout in workouts {
-            let duration = workout.duration
-
-            let activeEnergyBurnedType = HKQuantityType(.activeEnergyBurned)
-            let calories: Double
-            if let statistics = workout.statistics(for: activeEnergyBurnedType),
-                let sum = statistics.sumQuantity()
-            {
-                calories = sum.doubleValue(for: .kilocalorie())
-            } else {
-                calories = 0
-            }
-
-            let distance =
-                workout.totalDistance?.doubleValue(
-                    for: .meter()
-                ) ?? 0
-
-            totalDuration += duration
-            totalCalories += calories
-            totalDistance += distance
-
-            summary +=
-                "\n- \(formatDuration(duration)), \(Int(calories)) kcal, \(formatDistance(distance))"
-        }
-
-        summary +=
-            "\n\nTotal: \(formatDuration(totalDuration)), \(Int(totalCalories)) kcal, \(formatDistance(totalDistance))"
-        return summary
-    }
-
-    func formatDuration(_ duration: TimeInterval) -> String {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute]
-        formatter.unitsStyle = .abbreviated
-        return formatter.string(from: duration) ?? "N/A"
-    }
-
-    func formatDistance(_ distance: Double) -> String {
-        let kilometers = distance / 1000
-        return String(format: "%.2f km", kilometers)
+        return formatWorkoutSummary(
+            workouts, title: "Workout Summary for \(date):")
     }
 
     func processLLMOutput(_ text: String) async {
@@ -270,117 +181,14 @@ class LLMEvaluator {
     }
 
     func fetchWorkoutData() async throws -> String {
-        guard HKHealthStore.isHealthDataAvailable() else {
-            return "HealthKit is not available on this device."
-        }
-
-        let workoutType = HKObjectType.workoutType()
-
-        let authorizationStatus = healthStore.authorizationStatus(
-            for: workoutType
-        )
-        if authorizationStatus != .sharingAuthorized {
-            do {
-                try await healthStore
-                    .requestAuthorization(toShare: [], read: [workoutType])
-            } catch {
-                return
-                    "Failed to get HealthKit authorization: \(error.localizedDescription)"
-            }
-        }
-
-        let calendar = Calendar.current
-        let now = Date()
-        let startOfWeek = calendar.date(
-            from:
-                calendar
-                .dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))!
-        let endOfWeek = calendar.date(
-            byAdding: .day,
-            value: 7,
-            to: startOfWeek
-        )!
-
-        let predicate = HKQuery.predicateForSamples(
-            withStart: startOfWeek,
-            end: endOfWeek,
-            options: .strictStartDate
-        )
-
-        let workouts = try await withCheckedThrowingContinuation {
-            (continuation: CheckedContinuation<[HKWorkout], Error>) in
-            let query = HKSampleQuery(
-                sampleType: workoutType, predicate: predicate,
-                limit: HKObjectQueryNoLimit,
-                sortDescriptors: nil
-            ) { _, samples, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else if let workouts = samples as? [HKWorkout] {
-                    continuation.resume(returning: workouts)
-                } else {
-                    continuation.resume(returning: [])
-                }
-            }
-            healthStore.execute(query)
-        }
-
+        let workouts = try await healthManager.fetchWorkouts(for: .week(Date()))
         if workouts.isEmpty {
             return "No workouts found for this week."
         }
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEEE"  // Day name (e.g., "Monday")
-
-        var workoutsByDay: [String: [HKWorkout]] = [:]
-        var summary = "Workout Summary for this week:\n"
-
-        for workout in workouts {
-            let dayName = dateFormatter.string(from: workout.startDate)
-            if workoutsByDay[dayName] == nil {
-                workoutsByDay[dayName] = []
-            }
-            workoutsByDay[dayName]?.append(workout)
-        }
-
-        let sortedDays = workoutsByDay.keys.sorted { day1, day2 in
-            let index1 = calendar.component(
-                .weekday, from: dateFormatter.date(from: day1) ?? Date())
-            let index2 = calendar.component(
-                .weekday, from: dateFormatter.date(from: day2) ?? Date())
-            return index1 < index2
-        }
-
-        for day in sortedDays {
-            summary += "\n\n📅 \(day):"
-            for workout in workoutsByDay[day] ?? [] {
-                let duration = workout.duration
-
-                let activeEnergyBurnedType = HKQuantityType(.activeEnergyBurned)
-                let calories: Double
-                if let statistics = workout.statistics(
-                    for: activeEnergyBurnedType),
-                    let sum = statistics.sumQuantity()
-                {
-                    calories = sum.doubleValue(for: .kilocalorie())
-                } else {
-                    calories = 0
-                }
-
-                let distance =
-                    workout.totalDistance?.doubleValue(
-                        for: .meter()
-                    ) ?? 0
-
-                summary +=
-                    "\n- \(formatDuration(duration)), \(Int(calories)) kcal, \(formatDistance(distance))"
-            }
-        }
-
-        return summary
+        return formatWeeklyWorkoutSummary(workouts)
     }
 
-    /// Call this function when generation is complete to flush any remaining buffer.
     func generationDidComplete() async {
         if case .buffering(let currentBuffer) = toolCallState {
             print("Generation complete with remaining buffer: \(currentBuffer)")
@@ -497,7 +305,6 @@ class LLMEvaluator {
     }
 }
 
-
 // MARK: - Supporting Types
 
 private struct ToolCall: Codable {
@@ -505,8 +312,8 @@ private struct ToolCall: Codable {
     let arguments: String
 }
 
-private extension HKWorkoutActivityType {
-    var name: String {
+extension HKWorkoutActivityType {
+    fileprivate var name: String {
         switch self {
         case .running: return "Running"
         case .cycling: return "Cycling"
@@ -517,5 +324,76 @@ private extension HKWorkoutActivityType {
         case .crossTraining: return "Cross Training"
         default: return "Other"
         }
+    }
+}
+
+extension LLMEvaluator {
+    fileprivate func formatWorkoutSummary(
+        _ workouts: [HKWorkout], title: String
+    ) -> String {
+        var summary = title + "\n"
+        var totalDuration = TimeInterval(0)
+        var totalCalories = Double(0)
+        var totalDistance = Double(0)
+
+        for workout in workouts {
+            let metrics = healthManager.getWorkoutMetrics(workout)
+            totalDuration += metrics.duration
+            totalCalories += metrics.calories
+            totalDistance += metrics.distance
+
+            summary +=
+                "\n- \(formatDuration(metrics.duration)), \(Int(metrics.calories)) kcal, \(formatDistance(metrics.distance))"
+        }
+
+        summary +=
+            "\n\nTotal: \(formatDuration(totalDuration)), \(Int(totalCalories)) kcal, \(formatDistance(totalDistance))"
+        return summary
+    }
+
+    fileprivate func formatWeeklyWorkoutSummary(_ workouts: [HKWorkout])
+        -> String
+    {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "EEEE"
+
+        var workoutsByDay: [String: [HKWorkout]] = [:]
+        for workout in workouts {
+            let dayName = dateFormatter.string(from: workout.startDate)
+            workoutsByDay[dayName, default: []].append(workout)
+        }
+
+        let calendar = Calendar.current
+        let sortedDays = workoutsByDay.keys.sorted { day1, day2 in
+            let index1 = calendar.component(
+                .weekday, from: dateFormatter.date(from: day1) ?? Date())
+            let index2 = calendar.component(
+                .weekday, from: dateFormatter.date(from: day2) ?? Date())
+            return index1 < index2
+        }
+
+        var summary = "Workout Summary for this week:"
+        for day in sortedDays {
+            summary += "\n\n📅 \(day):"
+            for workout in workoutsByDay[day] ?? [] {
+                let metrics = healthManager.getWorkoutMetrics(workout)
+                summary +=
+                    "\n- \(formatDuration(metrics.duration)), \(Int(metrics.calories)) kcal, \(formatDistance(metrics.distance))"
+            }
+        }
+
+        return summary
+    }
+
+    func formatDuration(_ duration: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: duration) ?? "N/A"
+    }
+
+    func formatDistance(_ distance: Double) -> String {
+        let kilometers = distance / 1000
+        return String(format: "%.2f km", kilometers)
     }
 }
