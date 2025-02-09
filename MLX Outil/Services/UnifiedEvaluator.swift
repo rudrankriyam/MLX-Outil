@@ -1,12 +1,8 @@
-import Foundation
 import MLX
 import MLXLLM
 import MLXLMCommon
 import MLXRandom
-import Metal
-import Tokenizers
-import WeatherKit
-import CoreLocation
+import Foundation
 import HealthKit
 
 @MainActor
@@ -22,7 +18,7 @@ class UnifiedEvaluator: ObservableObject {
 
     private let modelService: ModelService
     private let toolCallHandler: ToolCallHandler
-    
+
     init() {
         self.modelService = ModelService(
             modelConfiguration: ModelRegistry.qwen2_5_1_5b,
@@ -70,13 +66,13 @@ class UnifiedEvaluator: ObservableObject {
                     "properties": [
                         "city": [
                             "type": "string",
-                            "description": "The name of the city"
+                            "description": "The name of the city",
                         ]
                     ],
                     "required": ["city"],
                 ] as [String: Any],
             ] as [String: Any],
-        ]
+        ],
     ]
 
     // Call this method with every incoming token.
@@ -84,7 +80,8 @@ class UnifiedEvaluator: ObservableObject {
         // Remove any leading <tool_call> marker from the incoming token.
         var tokenText = text
         if tokenText.hasPrefix("<tool_call>") {
-            tokenText = tokenText.replacingOccurrences(of: "<tool_call>", with: "")
+            tokenText = tokenText.replacingOccurrences(
+                of: "<tool_call>", with: "")
         }
 
         // Append the cleaned token to the buffer.
@@ -93,10 +90,12 @@ class UnifiedEvaluator: ObservableObject {
         // Check if the buffer now contains the closing tag.
         if toolCallBuffer.contains("</tool_call>") {
             // Remove the closing tag.
-            toolCallBuffer = toolCallBuffer.replacingOccurrences(of: "</tool_call>", with: "")
+            toolCallBuffer = toolCallBuffer.replacingOccurrences(
+                of: "</tool_call>", with: "")
 
             // The buffer should now contain the complete JSON.
-            let jsonString = toolCallBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+            let jsonString = toolCallBuffer.trimmingCharacters(
+                in: .whitespacesAndNewlines)
             print("Final JSON String: \(jsonString)")
 
             // Process the complete JSON.
@@ -116,16 +115,20 @@ class UnifiedEvaluator: ObservableObject {
 
         do {
             // Parse the JSON into a dictionary.
-            if let toolCall = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let name = toolCall["name"] as? String {
+            if let toolCall = try JSONSerialization.jsonObject(with: data)
+                as? [String: Any],
+                let name = toolCall["name"] as? String
+            {
                 print("Successfully parsed tool call with name: \(name)")
                 switch name {
                 case "get_workout_summary":
                     let workoutSummary = try await fetchWorkoutData()
-                    await continueConversation(with: workoutSummary, for: "Workout Summary")
+                    await continueConversation(
+                        with: workoutSummary, for: "Workout Summary")
                 case "get_weather_data":
                     if let arguments = toolCall["arguments"] as? [String: Any],
-                       let city = arguments["city"] as? String {
+                        let city = arguments["city"] as? String
+                    {
                         let weatherData = try await fetchWeatherData(for: city)
                         await continueConversation(with: weatherData, for: city)
                     }
@@ -135,7 +138,8 @@ class UnifiedEvaluator: ObservableObject {
             }
         } catch {
             print("Error parsing tool call JSON: \(error)")
-            self.output += "\nError parsing tool call: \(error.localizedDescription)\n"
+            self.output +=
+                "\nError parsing tool call: \(error.localizedDescription)\n"
         }
     }
 
@@ -144,7 +148,7 @@ class UnifiedEvaluator: ObservableObject {
         if workouts.isEmpty {
             return "No workouts found for this week."
         }
-        return formatWeeklyWorkoutSummary(workouts)
+        return OutputFormatter.formatWeeklyWorkoutSummary(workouts, using: .shared)
     }
 
     func fetchWeatherData(for city: String) async throws -> String {
@@ -156,84 +160,34 @@ class UnifiedEvaluator: ObservableObject {
         }
     }
 
-    private func formatWeeklyWorkoutSummary(_ workouts: [HKWorkout]) -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEEE"
-
-        var workoutsByDay: [String: [HKWorkout]] = [:]
-        for workout in workouts {
-            let dayName = dateFormatter.string(from: workout.startDate)
-            workoutsByDay[dayName, default: []].append(workout)
-        }
-
-        let calendar = Calendar.current
-        let sortedDays = workoutsByDay.keys.sorted { day1, day2 in
-            let index1 = calendar.component(
-                .weekday, from: dateFormatter.date(from: day1) ?? Date())
-            let index2 = calendar.component(
-                .weekday, from: dateFormatter.date(from: day2) ?? Date())
-            return index1 < index2
-        }
-
-        var summary = "Workout Summary for this week:"
-        for day in sortedDays {
-            summary += "\n\n📅 \(day):"
-            for workout in workoutsByDay[day] ?? [] {
-                let metrics = healthManager.getWorkoutMetrics(workout)
-                summary +=
-                "\n- \(OutputFormatter.formatDuration(metrics.duration)), \(Int(metrics.calories)) kcal, \(OutputFormatter.formatDistance(metrics.distance))"
-            }
-        }
-
-        return summary
-    }
-
     func generate(prompt: String, includingTools: Bool = true) async {
         guard !running else { return }
 
         running = true
         self.output = ""
 
-        print("Generating with prompt: \(prompt)")
-
         do {
-            let modelContainer = try await modelService.load()
+            let messages = [
+                ["role": "system", "content": Constants.systemPrompt],
+                ["role": "user", "content": prompt],
+            ]
 
-            MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
-
-            let result = try await modelContainer.perform { context in
-                let messages = [
-                    ["role": "system", "content": Constants.systemPrompt],
-                    ["role": "user", "content": prompt],
-                ]
-
-                let input = try await context.processor.prepare(
-                    input: .init(
-                        messages: messages,
-                        tools: includingTools ? Self.availableTools : nil
-                    )
-                )
-
-                return try MLXLMCommon.generate(
-                    input: input, parameters: GenerateParameters(temperature: 0.5),
-                    context: context
-                ) { tokens in
-                    if tokens.count % 2 == 0 {
-                        let text = context.tokenizer.decode(tokens: tokens)
-                        Task { @MainActor in
-                            if includingTools {
-                                print("Text: \(text)")
-                            } else {
-                                self.output = text
-                            }
-                        }
-                    }
-                    return .more
+            let result = try await modelService.generate(
+                messages: messages,
+                tools: includingTools ? Self.availableTools : nil
+            ) { [weak self] text in
+                if includingTools {
+                    print("Text: \(text)")
+                } else {
+                    self?.output = text
                 }
             }
-            print("Generated: \(result.output)")
-            if includingTools {
-                await processLLMOutput(result.output)
+
+            if includingTools,
+                let data = try await toolCallHandler.processLLMOutput(
+                    result.output)
+            {
+                await continueConversation(with: data, for: data)
             }
         } catch {
             output = "Failed: \(error)"
@@ -243,7 +197,8 @@ class UnifiedEvaluator: ObservableObject {
     }
 
     func continueConversation(with data: String, for context: String) async {
-        let followUpPrompt = "The \(context) data is: \(data). Now you are an expert. Please explain the data and provide recommendations based on this information."
+        let followUpPrompt =
+            "The \(context) data is: \(data). Now you are an expert. Please explain the data and provide recommendations based on this information."
         running = false
         await generate(prompt: followUpPrompt, includingTools: false)
     }

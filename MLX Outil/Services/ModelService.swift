@@ -71,11 +71,12 @@ class ModelService {
                 parameters: generateParameters,
                 context: context
             ) { tokens in
-                let text = context.tokenizer.decode(tokens: tokens)
-                Task { @MainActor in
-                    onTokens(text)
+                if tokens.count % 2 == 0 {
+                    let text = context.tokenizer.decode(tokens: tokens)
+                    Task { @MainActor in
+                        onTokens(text)
+                    }
                 }
-
                 return .more
             }
         }
