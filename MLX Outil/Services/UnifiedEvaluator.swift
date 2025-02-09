@@ -20,8 +20,19 @@ class UnifiedEvaluator: ObservableObject {
     var toolCallState: ToolCallParsingState = .idle
     var loadState = LoadState.idle
 
-    let modelConfiguration = ModelRegistry.qwen2_5_1_5b
-    let generateParameters = GenerateParameters(temperature: 0.5)
+    private let modelService: ModelService
+    private let toolCallHandler: ToolCallHandler
+    
+    init() {
+        self.modelService = ModelService(
+            modelConfiguration: ModelRegistry.qwen2_5_1_5b,
+            generateParameters: GenerateParameters(temperature: 0.5)
+        )
+        self.toolCallHandler = ToolCallHandler(
+            healthManager: HealthKitManager.shared,
+            weatherManager: WeatherKitManager.shared
+        )
+    }
 
     // Health-specific properties
     private let healthManager = HealthKitManager.shared
@@ -67,31 +78,6 @@ class UnifiedEvaluator: ObservableObject {
             ] as [String: Any],
         ]
     ]
-
-    func load() async throws -> ModelContainer {
-        switch loadState {
-        case .idle:
-            MLX.GPU.set(cacheLimit: 20 * 1024 * 1024)
-
-            let modelContainer = try await LLMModelFactory.shared.loadContainer(
-                configuration: modelConfiguration
-            ) { [modelConfiguration] progress in
-                Task { @MainActor in
-                    self.modelInfo = "Downloading \(modelConfiguration.name): \(Int(progress.fractionCompleted * 100))%"
-                }
-            }
-            let numParams = await modelContainer.perform { context in
-                context.model.numParameters()
-            }
-
-            print("Loaded \(modelConfiguration.id).  Weights: \(numParams / (1024*1024))M")
-            loadState = .loaded(modelContainer)
-            return modelContainer
-
-        case .loaded(let modelContainer):
-            return modelContainer
-        }
-    }
 
     // Call this method with every incoming token.
     func processLLMOutput(_ text: String) async {
@@ -211,7 +197,7 @@ class UnifiedEvaluator: ObservableObject {
         print("Generating with prompt: \(prompt)")
 
         do {
-            let modelContainer = try await load()
+            let modelContainer = try await modelService.load()
 
             MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
 
@@ -229,7 +215,7 @@ class UnifiedEvaluator: ObservableObject {
                 )
 
                 return try MLXLMCommon.generate(
-                    input: input, parameters: generateParameters,
+                    input: input, parameters: GenerateParameters(temperature: 0.5),
                     context: context
                 ) { tokens in
                     if tokens.count % 2 == 0 {

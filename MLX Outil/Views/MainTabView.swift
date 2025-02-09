@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject private var llm: UnifiedEvaluator
-    
+
     var body: some View {
         TabView {
             WorkoutView()
@@ -21,9 +21,6 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Weather", systemImage: "cloud.sun")
                 }
-        }
-        .task {
-            _ = try? await llm.load()
         }
     }
 }
