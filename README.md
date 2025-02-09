@@ -13,7 +13,7 @@ MLX Outil is a multiplatform Swift project to show tool usage with Qwen 2.5 1.5B
 - On-device inference using MLX Swift
 - Example tools implementation:
   - Weather information
-  - Web search simulation [pending]
+  - Workout summary daya
 
 ## Requirements
 
