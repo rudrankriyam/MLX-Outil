@@ -3,7 +3,11 @@ import Foundation
 class ToolCallHandler {
     private let healthManager: HealthKitManager
     private let weatherManager: WeatherKitManager
+    private let loadingManager = LoadingManager.shared
     private var toolCallBuffer: String = ""
+    private var isCollectingToolCall = false
+
+    private let decoder = JSONDecoder()
 
     init(healthManager: HealthKitManager, weatherManager: WeatherKitManager) {
         self.healthManager = healthManager
@@ -66,8 +70,19 @@ class ToolCallHandler {
     }
 
     private func fetchWeatherData(for city: String) async throws -> String {
-        let weather = try await weatherManager.fetchWeather(forCity: city)
-        return OutputFormatter.formatWeatherData(weather)
+        loadingManager.startLoading(message: "Fetching weather data for \(city)...")
+
+        do {
+            // Add artificial delay for better UX
+            try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+
+            let weather = try await weatherManager.fetchWeather(forCity: city)
+            loadingManager.stopLoading()
+            return OutputFormatter.formatWeatherData(weather)
+        } catch {
+            loadingManager.stopLoading()
+            throw error
+        }
     }
 }
 

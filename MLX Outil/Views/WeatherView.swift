@@ -5,6 +5,7 @@ import MLXLMCommon
 
 struct WeatherView: View {
   @EnvironmentObject private var evaluator: UnifiedEvaluator
+  @StateObject private var loadingManager = LoadingManager.shared
   @State private var prompt = "How's the weather today in Gurgaon and what should I wear?"
 
   private let backgroundColor = Color(.systemBackground)
@@ -13,9 +14,15 @@ struct WeatherView: View {
 
   var body: some View {
     NavigationStack {
-      VStack(alignment: .leading, spacing: 16) {
-        outputView
-        promptInputView
+      ZStack {
+        VStack(alignment: .leading, spacing: 16) {
+          outputView
+          promptInputView
+        }
+
+        if loadingManager.isLoading {
+          LoadingView()
+        }
       }
       #if os(visionOS)
         .padding(40)
@@ -83,7 +90,9 @@ struct WeatherView: View {
 
   private func generate() {
     Task {
+      loadingManager.startLoading(message: "Checking weather conditions...")
       await evaluator.generate(prompt: prompt)
+      loadingManager.stopLoading()
     }
   }
 }
