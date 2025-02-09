@@ -28,6 +28,8 @@ class UnifiedEvaluator: ObservableObject {
 
     // Weather-specific properties
     private let weatherManager = WeatherKitManager.shared
+    
+    private var toolCallBuffer: String = ""
 
     enum LoadState {
         case idle
@@ -91,65 +93,43 @@ class UnifiedEvaluator: ObservableObject {
         }
     }
 
+    // Call this method with every incoming token.
     func processLLMOutput(_ text: String) async {
-        if text.contains("<tool_call>") {
-            switch toolCallState {
-            case .idle:
-                if let startRange = text.range(of: "<tool_call>") {
-                    let afterStart = text[startRange.upperBound...]
-                    if let endRange = afterStart.range(of: "</tool_call>") {
-                        let jsonString = String(afterStart[..<endRange.lowerBound])
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replacingOccurrences(of: "{{", with: "{")
-                            .replacingOccurrences(of: "}}", with: "}")
-                            .replacingOccurrences(of: "}", with: "}}")
-                            .replacingOccurrences(of: "}}}}", with: "}}")
-                        print("Processing JSON: \(jsonString)")
-                        await handleToolCall(jsonString)
-                        toolCallState = .idle
-                    } else {
-                        toolCallState = .buffering(String(afterStart))
-                    }
-                }
-            case .buffering(let currentBuffer):
-                if let endRange = text.range(of: "</tool_call>") {
-                    let jsonString = (currentBuffer + String(text[..<endRange.lowerBound]))
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                        .replacingOccurrences(of: "{{", with: "{")
-                        .replacingOccurrences(of: "}}", with: "}")
-                        .replacingOccurrences(of: "<tool_call>", with: "")
-                        .replacingOccurrences(of: "}", with: "}}")
-                        .replacingOccurrences(of: "}}}}", with: "}}")
-                    print("Processing buffered JSON: \(jsonString)")
-                    await handleToolCall(jsonString)
-                    toolCallState = .idle
-                } else {
-                    toolCallState = .buffering(currentBuffer + text)
-                }
-            }
-        } else {
-            self.output += text
+        // Remove any leading <tool_call> marker from the incoming token.
+        var tokenText = text
+        if tokenText.hasPrefix("<tool_call>") {
+            tokenText = tokenText.replacingOccurrences(of: "<tool_call>", with: "")
+        }
+
+        // Append the cleaned token to the buffer.
+        toolCallBuffer += tokenText
+
+        // Check if the buffer now contains the closing tag.
+        if toolCallBuffer.contains("</tool_call>") {
+            // Remove the closing tag.
+            toolCallBuffer = toolCallBuffer.replacingOccurrences(of: "</tool_call>", with: "")
+
+            // The buffer should now contain the complete JSON.
+            let jsonString = toolCallBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+            print("Final JSON String: \(jsonString)")
+
+            // Process the complete JSON.
+            await handleToolCall(jsonString)
+
+            // Clear the buffer for the next tool call.
+            toolCallBuffer = ""
         }
     }
 
     @MainActor
-    func handleToolCall(_ rawBlock: String) async {
-        let cleanedJSON = rawBlock
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "<tool_call>", with: "")
-            .replacingOccurrences(of: "</tool_call>", with: "")
-
-        if !cleanedJSON.hasPrefix("{") || !cleanedJSON.hasSuffix("}") {
-            print("Invalid JSON format: \(cleanedJSON)")
-            return
-        }
-
-        guard let data = cleanedJSON.data(using: .utf8) else {
+    func handleToolCall(_ jsonString: String) async {
+        guard let data = jsonString.data(using: .utf8) else {
             print("Failed to create data from JSON string")
             return
         }
 
         do {
+            // Parse the JSON into a dictionary.
             if let toolCall = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                let name = toolCall["name"] as? String {
                 print("Successfully parsed tool call with name: \(name)")
@@ -215,7 +195,7 @@ class UnifiedEvaluator: ObservableObject {
             for workout in workoutsByDay[day] ?? [] {
                 let metrics = healthManager.getWorkoutMetrics(workout)
                 summary +=
-                    "\n- \(formatDuration(metrics.duration)), \(Int(metrics.calories)) kcal, \(formatDistance(metrics.distance))"
+                "\n- \(formatDuration(metrics.duration)), \(Int(metrics.calories)) kcal, \(formatDistance(metrics.distance))"
             }
         }
 
