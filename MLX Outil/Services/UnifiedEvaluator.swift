@@ -36,7 +36,7 @@ class UnifiedEvaluator: ObservableObject {
         case loaded(ModelContainer)
     }
 
-    let tools: [[String: Any]] = [
+    static let availableTools: [[String: Any]] = [
         [
             "type": "function",
             "function": [
@@ -164,7 +164,7 @@ class UnifiedEvaluator: ObservableObject {
     func fetchWeatherData(for city: String) async throws -> String {
         do {
             let weather = try await weatherManager.fetchWeather(forCity: city)
-            return formatWeatherData(weather)
+            return OutputFormatter.formatWeatherData(weather)
         } catch {
             return "Unable to fetch weather data for \(city). Please try again."
         }
@@ -195,26 +195,11 @@ class UnifiedEvaluator: ObservableObject {
             for workout in workoutsByDay[day] ?? [] {
                 let metrics = healthManager.getWorkoutMetrics(workout)
                 summary +=
-                "\n- \(formatDuration(metrics.duration)), \(Int(metrics.calories)) kcal, \(formatDistance(metrics.distance))"
+                "\n- \(OutputFormatter.formatDuration(metrics.duration)), \(Int(metrics.calories)) kcal, \(OutputFormatter.formatDistance(metrics.distance))"
             }
         }
 
         return summary
-    }
-
-    private func formatWeatherData(_ weather: WeatherKitManager.WeatherData) -> String {
-        return """
-        Current Weather:
-        Temperature: \(String(format: "%.1f°C", weather.temperature))
-        Feels Like: \(String(format: "%.1f°C", weather.feelsLike))
-        Condition: \(weather.condition)
-        Humidity: \(String(format: "%.0f%%", weather.humidity * 100))
-        Wind Speed: \(String(format: "%.1f km/h", weather.windSpeed))
-        UV Index: \(weather.uvIndex)
-        Visibility: \(String(format: "%.1f km", weather.visibility / 1000))
-        Pressure: \(String(format: "%.0f hPa", weather.pressure))
-        Precipitation Chance: \(String(format: "%.0f%%", weather.precipitationChance * 100))
-        """
     }
 
     func generate(prompt: String, includingTools: Bool = true) async {
@@ -231,18 +216,15 @@ class UnifiedEvaluator: ObservableObject {
             MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
 
             let result = try await modelContainer.perform { context in
-                var messages = [
-                    [
-                        "role": "system",
-                        "content": "You are a helpful assistant with access to health and weather data.",
-                    ],
+                let messages = [
+                    ["role": "system", "content": Constants.systemPrompt],
                     ["role": "user", "content": prompt],
                 ]
 
                 let input = try await context.processor.prepare(
                     input: .init(
                         messages: messages,
-                        tools: includingTools ? tools : nil
+                        tools: includingTools ? Self.availableTools : nil
                     )
                 )
 
@@ -278,26 +260,5 @@ class UnifiedEvaluator: ObservableObject {
         let followUpPrompt = "The \(context) data is: \(data). Now you are an expert. Please explain the data and provide recommendations based on this information."
         running = false
         await generate(prompt: followUpPrompt, includingTools: false)
-    }
-}
-
-// MARK: - Supporting Types
-
-private struct ToolCall: Codable {
-    let name: String
-    let arguments: String
-}
-
-extension UnifiedEvaluator {
-    func formatDuration(_ duration: TimeInterval) -> String {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute]
-        formatter.unitsStyle = .abbreviated
-        return formatter.string(from: duration) ?? "N/A"
-    }
-
-    func formatDistance(_ distance: Double) -> String {
-        let kilometers = distance / 1000
-        return String(format: "%.2f km", kilometers)
     }
 }
