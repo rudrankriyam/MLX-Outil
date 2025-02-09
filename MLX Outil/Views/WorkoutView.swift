@@ -8,7 +8,7 @@ import SwiftUI
 import Tokenizers
 
 struct WorkoutView: View {
-    @State private var llm = LLMEvaluator()
+    @EnvironmentObject private var evaluator: UnifiedEvaluator
     @State private var prompt =
         "Summary of my workouts this week, and how I did in them."
 
@@ -38,9 +38,6 @@ struct WorkoutView: View {
             #endif
             .navigationTitle("HealthSeek")
             .background(backgroundColor)
-            .task {
-                _ = try? await llm.load()
-            }
         }
     }
 
@@ -48,14 +45,14 @@ struct WorkoutView: View {
         ScrollView(.vertical) {
             ScrollViewReader { sp in
                 Group {
-                    Text(llm.output)
+                    Text(evaluator.output)
                         .textSelection(.enabled)
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(secondaryBackground)
                         .cornerRadius(12)
                 }
-                .onChange(of: llm.output) { _, _ in
+                .onChange(of: evaluator.output) { _, _ in
                     sp.scrollTo("bottom")
                 }
 
@@ -77,24 +74,24 @@ struct WorkoutView: View {
             .lineLimit(1...4)
             .textFieldStyle(.plain)
             .onSubmit(generate)
-            .disabled(llm.running)
+            .disabled(evaluator.running)
             #if os(visionOS)
                 .textFieldStyle(.roundedBorder)
             #endif
 
             Button(action: generate) {
                 Image(
-                    systemName: llm.running
+                    systemName: evaluator.running
                         ? "stop.circle.fill" : "arrow.up.circle.fill"
                 )
                 .resizable()
                 .frame(width: 30, height: 30)
-                .foregroundColor(llm.running ? .red : accentColor)
+                .foregroundColor(evaluator.running ? .red : accentColor)
             }
             .disabled(
                 prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             )
-            .animation(.easeInOut, value: llm.running)
+            .animation(.easeInOut, value: evaluator.running)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -105,7 +102,7 @@ struct WorkoutView: View {
 
     private func generate() {
         Task {
-            await llm.generate(prompt: prompt)
+            await evaluator.generate(prompt: prompt)
         }
     }
 

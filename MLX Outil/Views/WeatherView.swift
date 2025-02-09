@@ -4,7 +4,7 @@ import MLXLLM
 import MLXLMCommon
 
 struct WeatherView: View {
-  @State private var llm = LLMEvaluator()
+  @EnvironmentObject private var evaluator: UnifiedEvaluator
   @State private var prompt = "How's the weather today and what should I wear?"
 
   private let backgroundColor = Color(.systemBackground)
@@ -24,9 +24,6 @@ struct WeatherView: View {
       #endif
       .navigationTitle("Weather")
       .background(backgroundColor)
-      .task {
-        _ = try? await llm.load()
-      }
     }
   }
 
@@ -34,14 +31,14 @@ struct WeatherView: View {
     ScrollView(.vertical) {
       ScrollViewReader { sp in
         Group {
-          Text(llm.output)
+          Text(evaluator.output)
             .textSelection(.enabled)
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(secondaryBackground)
             .cornerRadius(12)
         }
-        .onChange(of: llm.output) { _, _ in
+        .onChange(of: evaluator.output) { _, _ in
           sp.scrollTo("bottom")
         }
 
@@ -63,19 +60,19 @@ struct WeatherView: View {
       .lineLimit(1...4)
       .textFieldStyle(.plain)
       .onSubmit(generate)
-      .disabled(llm.running)
+      .disabled(evaluator.running)
       #if os(visionOS)
         .textFieldStyle(.roundedBorder)
       #endif
 
       Button(action: generate) {
-        Image(systemName: llm.running ? "stop.circle.fill" : "arrow.up.circle.fill")
+        Image(systemName: evaluator.running ? "stop.circle.fill" : "arrow.up.circle.fill")
           .resizable()
           .frame(width: 30, height: 30)
-          .foregroundColor(llm.running ? .red : accentColor)
+          .foregroundColor(evaluator.running ? .red : accentColor)
       }
       .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-      .animation(.easeInOut, value: llm.running)
+      .animation(.easeInOut, value: evaluator.running)
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 12)
@@ -86,7 +83,7 @@ struct WeatherView: View {
 
   private func generate() {
     Task {
-      await llm.generate(prompt: prompt)
+      await evaluator.generate(prompt: prompt)
     }
   }
 }

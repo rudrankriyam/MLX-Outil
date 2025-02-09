@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct MLXOutilApp: App {
+  @StateObject private var evaluator = UnifiedEvaluator()
+
   var body: some Scene {
     WindowGroup {
       MainTabView()
+        .environmentObject(evaluator)
     }
   }
 }

@@ -29,12 +29,22 @@ class WeatherKitManager {
     
     // Fetch weather for a specific city
     func fetchWeather(forCity city: String) async throws -> WeatherData {
+        // First, try to get coordinates for the city
+        let coordinates = try await getCoordinates(for: city)
+        
+        // Then fetch weather using these coordinates
+        return try await fetchWeather(for: coordinates)
+    }
+    
+    private func getCoordinates(for city: String) async throws -> CLLocation {
         let geocoder = CLGeocoder()
-        guard let location = try await geocoder.geocodeAddressString(city).first?.location else {
+        let placemarks = try await geocoder.geocodeAddressString(city)
+        
+        guard let location = placemarks.first?.location else {
             throw WeatherKitError.locationNotFound
         }
         
-        return try await fetchWeather(for: location)
+        return location
     }
     
     // Fetch weather for current location
@@ -46,7 +56,6 @@ class WeatherKitManager {
         return try await fetchWeather(for: location)
     }
     
-    // Common weather fetching logic
     private func fetchWeather(for location: CLLocation) async throws -> WeatherData {
         do {
             let weather = try await weatherService.weather(for: location)
@@ -67,4 +76,3 @@ class WeatherKitManager {
         locationManager.requestWhenInUseAuthorization()
     }
 }
-
