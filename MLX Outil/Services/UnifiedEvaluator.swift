@@ -28,7 +28,7 @@ class UnifiedEvaluator: ObservableObject {
 
     // Weather-specific properties
     private let weatherManager = WeatherKitManager.shared
-    
+
     private var toolCallBuffer: String = ""
 
     enum LoadState {
@@ -217,101 +217,67 @@ class UnifiedEvaluator: ObservableObject {
         """
     }
 
+    func generate(prompt: String, includingTools: Bool = true) async {
+        guard !running else { return }
+
+        running = true
+        self.output = ""
+
+        print("Generating with prompt: \(prompt)")
+
+        do {
+            let modelContainer = try await load()
+
+            MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
+
+            let result = try await modelContainer.perform { context in
+                var messages = [
+                    [
+                        "role": "system",
+                        "content": "You are a helpful assistant with access to health and weather data.",
+                    ],
+                    ["role": "user", "content": prompt],
+                ]
+
+                let input = try await context.processor.prepare(
+                    input: .init(
+                        messages: messages,
+                        tools: includingTools ? tools : nil
+                    )
+                )
+
+                return try MLXLMCommon.generate(
+                    input: input, parameters: generateParameters,
+                    context: context
+                ) { tokens in
+                    if tokens.count % 2 == 0 {
+                        let text = context.tokenizer.decode(tokens: tokens)
+                        Task { @MainActor in
+                            if includingTools {
+                                print("Text: \(text)")
+                            } else {
+                                self.output = text
+                            }
+                        }
+                    }
+                    return .more
+                }
+            }
+            print("Generated: \(result.output)")
+            if includingTools {
+                await processLLMOutput(result.output)
+            }
+        } catch {
+            output = "Failed: \(error)"
+        }
+
+        running = false
+    }
+
     func continueConversation(with data: String, for context: String) async {
         let followUpPrompt = "The \(context) data is: \(data). Now you are an expert. Please explain the data and provide recommendations based on this information."
         running = false
-        await generateFinal(prompt: followUpPrompt)
-    }
-
-    func generate(prompt: String) async {
-        guard !running else { return }
-
-        running = true
-        self.output = ""
-
-        print("Generating with prompt: \(prompt)")
-
-        do {
-            let modelContainer = try await load()
-
-            MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
-
-            let result = try await modelContainer.perform { context in
-                let input = try await context.processor.prepare(
-                    input: .init(
-                        messages: [
-                            [
-                                "role": "system",
-                                "content": "You are a helpful assistant with access to health and weather data.",
-                            ],
-                            ["role": "user", "content": prompt],
-                        ], tools: tools))
-
-                return try MLXLMCommon.generate(
-                    input: input, parameters: generateParameters,
-                    context: context
-                ) { tokens in
-                    if tokens.count % 2 == 0 {
-                        let text = context.tokenizer.decode(tokens: tokens)
-                        Task { @MainActor in
-                            print("Text: \(text)")
-                        }
-                    }
-                    return .more
-                }
-            }
-            print("Generated: \(result.output)")
-            await processLLMOutput(result.output)
-        } catch {
-            output = "Failed: \(error)"
-        }
-
-        running = false
-    }
-
-    func generateFinal(prompt: String) async {
-        guard !running else { return }
-
-        running = true
-        self.output = ""
-
-        print("Generating with prompt: \(prompt)")
-
-        do {
-            let modelContainer = try await load()
-
-            MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
-
-            let result = try await modelContainer.perform { context in
-                let input = try await context.processor.prepare(
-                    input: .init(
-                        messages: [
-                            [
-                                "role": "system",
-                                "content": "You are a helpful assistant with access to health and weather data.",
-                            ],
-                            ["role": "user", "content": prompt],
-                        ]))
-                return try MLXLMCommon.generate(
-                    input: input, parameters: generateParameters,
-                    context: context
-                ) { tokens in
-                    if tokens.count % 2 == 0 {
-                        let text = context.tokenizer.decode(tokens: tokens)
-                        Task { @MainActor in
-                            self.output = text
-                        }
-                    }
-
-                    return .more
-                }
-            }
-            print("Generated: \(result.output)")
-        } catch {
-            output = "Failed: \(error)"
-        }
-
-        running = false
+        await generate(prompt: followUpPrompt, includingTools: false)
     }
 }
 
