@@ -11,7 +11,7 @@ import SwiftUI
 struct MLXOutilApp: App {
   var body: some Scene {
     WindowGroup {
-      ContentView()
+      MainTabView()
     }
   }
 }

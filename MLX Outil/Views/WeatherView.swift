@@ -1,30 +1,15 @@
-// Copyright 2024 Apple Inc.
-
-import HealthKit
+import SwiftUI
 import MLX
 import MLXLLM
 import MLXLMCommon
-import MLXRandom
-import Metal
-import SwiftUI
-import Tokenizers
 
-struct ContentView: View {
+struct WeatherView: View {
   @State private var llm = LLMEvaluator()
-  @State private var prompt = "Summary of my workouts this week, and how I did in them."
+  @State private var prompt = "How's the weather today and what should I wear?"
 
-  // Add system colors and constants
   private let backgroundColor = Color(.systemBackground)
   private let secondaryBackground = Color(.secondarySystemBackground)
   private let accentColor = Color.accentColor
-
-  /// Style options for displaying the LLM output
-  private enum DisplayStyle: String, CaseIterable, Identifiable {
-    case plain, markdown
-    var id: Self { self }
-  }
-
-  @State private var selectedDisplayStyle = DisplayStyle.markdown
 
   var body: some View {
     NavigationStack {
@@ -37,7 +22,7 @@ struct ContentView: View {
       #else
         .padding()
       #endif
-      .navigationTitle("HealthSeek")
+      .navigationTitle("Weather")
       .background(backgroundColor)
       .task {
         _ = try? await llm.load()
@@ -71,7 +56,7 @@ struct ContentView: View {
   private var promptInputView: some View {
     HStack(spacing: 12) {
       TextField(
-        "Ask something about your health data...",
+        "Ask about weather and clothing suggestions...",
         text: $prompt,
         axis: .vertical
       )
@@ -103,14 +88,5 @@ struct ContentView: View {
     Task {
       await llm.generate(prompt: prompt)
     }
-  }
-
-  private func copyToClipboard(_ string: String) {
-    #if os(macOS)
-      NSPasteboard.general.clearContents()
-      NSPasteboard.general.setString(string, forType: .string)
-    #else
-      UIPasteboard.general.string = string
-    #endif
   }
 }
