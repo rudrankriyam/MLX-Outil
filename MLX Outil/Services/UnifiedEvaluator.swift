@@ -226,9 +226,14 @@ class UnifiedEvaluator: ObservableObject {
         return """
         Current Weather:
         Temperature: \(String(format: "%.1f°C", weather.temperature))
+        Feels Like: \(String(format: "%.1f°C", weather.feelsLike))
         Condition: \(weather.condition)
         Humidity: \(String(format: "%.0f%%", weather.humidity * 100))
         Wind Speed: \(String(format: "%.1f km/h", weather.windSpeed))
+        UV Index: \(weather.uvIndex)
+        Visibility: \(String(format: "%.1f km", weather.visibility / 1000))
+        Pressure: \(String(format: "%.0f hPa", weather.pressure))
+        Precipitation Chance: \(String(format: "%.0f%%", weather.precipitationChance * 100))
         """
     }
 

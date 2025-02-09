@@ -5,7 +5,7 @@ import MLXLMCommon
 
 struct WeatherView: View {
   @EnvironmentObject private var evaluator: UnifiedEvaluator
-  @State private var prompt = "How's the weather today and what should I wear?"
+  @State private var prompt = "How's the weather today in Gurgaon and what should I wear?"
 
   private let backgroundColor = Color(.systemBackground)
   private let secondaryBackground = Color(.secondarySystemBackground)
