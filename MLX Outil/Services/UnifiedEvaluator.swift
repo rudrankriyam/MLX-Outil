@@ -53,8 +53,8 @@ class UnifiedEvaluator: ObservableObject {
                     "type": "object",
                     "properties": [:],
                     "required": [],
-                ] as [String: Any],
-            ] as [String: Any],
+                ],
+            ],
         ],
         [
             "type": "function",
@@ -66,12 +66,12 @@ class UnifiedEvaluator: ObservableObject {
                     "properties": [
                         "location": [
                             "type": "string",
-                            "description": "The city and state, e.g. San Francisco, CA",
+                            "description": "The city and state, e.g. New Delhi, Delhi",
                         ]
                     ],
                     "required": ["location"],
-                ] as [String: Any],
-            ] as [String: Any],
+                ],
+            ],
         ],
     ]
 
