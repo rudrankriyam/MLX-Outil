@@ -55,11 +55,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-- MLX team for the Swift implementation
-- Meta AI for the Qwen models
-- Apple for HealthKit integration
-
 ## Contact
 For questions and support, please open an issue in the repository.
