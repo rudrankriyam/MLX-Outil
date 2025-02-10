@@ -12,7 +12,7 @@ MLX Outil is a multiplatform Swift project to show tool usage with Qwen 2.5 1.5B
 - Cross-platform support (iOS, macOS, visionOS)
 - On-device inference using MLX Swift
 - Example tools implementation:
-  - Weather information
+  - Weather information (You will have to provide your own bundle identifier which has WeatherKit checked)
   - Workout summary data (still implementing)
 
 ## Requirements
@@ -54,12 +54,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- MLX team for the Swift implementation
-- Meta AI for the Qwen models
-- Apple for HealthKit integration
 
 ## Contact
 For questions and support, please open an issue in the repository.
