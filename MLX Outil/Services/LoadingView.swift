@@ -31,18 +31,12 @@ struct LoadingView: View {
                 }
                 .padding(.horizontal)
 
-                // Loading message
                 Text(loadingManager.loadingMessage)
                     .foregroundStyle(.secondary)
                     .font(.subheadline)
             }
             .frame(maxWidth: 300)
             .padding(.vertical)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: Color(.black).opacity(0.1), radius: 20)
-            )
         }
     }
 }
