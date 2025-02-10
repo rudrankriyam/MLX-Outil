@@ -2,6 +2,7 @@ import SwiftUI
 import MLX
 import MLXLLM
 import MLXLMCommon
+import MarkdownUI
 
 struct WeatherView: View {
   @EnvironmentObject private var evaluator: UnifiedEvaluator
@@ -38,7 +39,7 @@ struct WeatherView: View {
     ScrollView(.vertical) {
       ScrollViewReader { sp in
         Group {
-          Text(evaluator.output)
+          Markdown(evaluator.output)
             .textSelection(.enabled)
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
