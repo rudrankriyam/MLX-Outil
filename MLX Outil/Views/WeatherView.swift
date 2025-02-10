@@ -5,7 +5,7 @@ import MLXLMCommon
 import MarkdownUI
 
 struct WeatherView: View {
-  @EnvironmentObject private var evaluator: UnifiedEvaluator
+    @Environment(UnifiedEvaluator.self) private var evaluator
   @StateObject private var loadingManager = LoadingManager.shared
   @State private var prompt = "How's the weather today in Gurgaon and what should I wear?"
 

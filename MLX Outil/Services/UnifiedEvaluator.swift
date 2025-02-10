@@ -6,10 +6,11 @@ import Foundation
 import HealthKit
 
 @MainActor
-class UnifiedEvaluator: ObservableObject {
+@Observable
+class UnifiedEvaluator {
 
-    @Published var running = false
-    @Published var output = ""
+    var running = false
+    var output = ""
     var modelInfo = ""
     var stat = ""
 

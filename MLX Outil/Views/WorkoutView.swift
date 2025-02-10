@@ -8,7 +8,7 @@ import SwiftUI
 import Tokenizers
 
 struct WorkoutView: View {
-    @EnvironmentObject private var evaluator: UnifiedEvaluator
+    @Environment(UnifiedEvaluator.self) private var evaluator
     @State private var prompt =
         "Summary of my workouts this week, and how I did in them."
 
