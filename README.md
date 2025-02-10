@@ -2,7 +2,7 @@
 
 MLX Outil is a multiplatform Swift project to show tool usage with Qwen 2.5 1.5B model using MLX Swift across iOS, macOS, and visionOS platforms.
 
-![Platforms](https://img.shields.io/badge/Platforms-iOS%2016.0+%20|%20macOS%2013.0+%20|%20visionOS%201.0+-lightgrey)
+![Platforms](https://img.shields.io/badge/Platforms-iOS%2017.0+%20|%20macOS%2014.0+%20|%20visionOS%201.0+-lightgrey)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange)
 ![MLX](https://img.shields.io/badge/MLX-latest-blue)
 
@@ -18,8 +18,8 @@ MLX Outil is a multiplatform Swift project to show tool usage with Qwen 2.5 1.5B
 ## Requirements
 
 - Xcode 15.0+
-- iOS 16.0+
-- macOS 13.0+
+- iOS 17.0+
+- macOS 14.0+
 - visionOS 1.0+
 - Swift 6.0
 - MLX Swift (latest version)
