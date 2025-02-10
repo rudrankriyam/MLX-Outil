@@ -89,6 +89,60 @@ class WeatherKitManager {
         return try await fetchWeather(for: location)
     }
 
+    private let openMeteoBaseURL = "https://api.open-meteo.com/v1/forecast"
+
+    private struct OpenMeteoResponse: Codable {
+        let current: CurrentWeather
+
+        struct CurrentWeather: Codable {
+            let temperature: Double
+            let windspeed: Double
+            let relativehumidity: Double
+            let apparentTemperature: Double
+            let precipitation: Double
+            let pressure: Double
+
+            enum CodingKeys: String, CodingKey {
+                case temperature = "temperature_2m"
+                case windspeed = "windspeed_10m"
+                case relativehumidity = "relative_humidity_2m"
+                case apparentTemperature = "apparent_temperature"
+                case precipitation
+                case pressure = "surface_pressure"
+            }
+        }
+    }
+
+    private func fetchWeatherFromOpenMeteo(for location: CLLocation) async throws -> WeatherData {
+        Logger.log("Falling back to OpenMeteo for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+
+        let urlString = "\(openMeteoBaseURL)?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,precipitation,windspeed_10m"
+
+        guard let url = URL(string: urlString) else {
+            throw WeatherKitError.weatherDataUnavailable
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let response = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
+
+            return WeatherData(
+                temperature: response.current.temperature,
+                condition: "Not available",
+                humidity: response.current.relativehumidity / 100.0,
+                windSpeed: response.current.windspeed,
+                feelsLike: response.current.apparentTemperature,
+                uvIndex: 0,
+                visibility: 0,
+                pressure: response.current.pressure,
+                precipitationChance: response.current.precipitation
+            )
+        } catch {
+            Logger.log("OpenMeteo request failed: \(error)", type: "ERROR")
+            throw WeatherKitError.weatherDataUnavailable
+        }
+    }
+
     private func fetchWeather(for location: CLLocation) async throws -> WeatherData {
         Logger.log("Starting weather service request for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
 
@@ -111,8 +165,8 @@ class WeatherKitManager {
             Logger.log("Weather data processed successfully: \(weatherData)")
             return weatherData
         } catch {
-            Logger.log("Weather service request failed: \(error)", type: "ERROR")
-            throw WeatherKitError.weatherDataUnavailable
+            Logger.log("WeatherKit request failed, attempting OpenMeteo fallback: \(error)", type: "WARNING")
+            return try await fetchWeatherFromOpenMeteo(for: location)
         }
     }
 
