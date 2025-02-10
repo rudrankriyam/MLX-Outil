@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @EnvironmentObject private var llm: UnifiedEvaluator
+    @Environment(UnifiedEvaluator.self) var llm
 
     var body: some View {
         TabView {
@@ -26,5 +26,7 @@ struct MainTabView: View {
 }
 
 #Preview {
-    MainTabView()
+    @Previewable @State var evaluator = UnifiedEvaluator()
+    return MainTabView()
+        .environment(evaluator)
 }
