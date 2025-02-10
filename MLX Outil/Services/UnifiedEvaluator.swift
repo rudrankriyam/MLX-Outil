@@ -24,6 +24,7 @@ class UnifiedEvaluator: ObservableObject {
             modelConfiguration: ModelRegistry.qwen2_5_1_5b,
             generateParameters: GenerateParameters(temperature: 0.5)
         )
+        
         self.toolCallHandler = ToolCallHandler(
             healthManager: HealthKitManager.shared,
             weatherManager: WeatherKitManager.shared
@@ -74,23 +75,6 @@ class UnifiedEvaluator: ObservableObject {
             ],
         ],
     ]
-
-    func fetchWorkoutData() async throws -> String {
-        let workouts = try await healthManager.fetchWorkouts(for: .week(Date()))
-        if workouts.isEmpty {
-            return "No workouts found for this week."
-        }
-        return OutputFormatter.formatWeeklyWorkoutSummary(workouts, using: .shared)
-    }
-
-    func fetchWeatherData(for location: String) async throws -> String {
-        do {
-            let weather = try await weatherManager.fetchWeather(forCity: location)
-            return OutputFormatter.formatWeatherData(weather)
-        } catch {
-            return "Unable to fetch weather data for \(location). Please try again."
-        }
-    }
 
     func generate(prompt: String, includingTools: Bool = true) async {
         guard !running else { return }
