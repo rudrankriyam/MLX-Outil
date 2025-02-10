@@ -50,11 +50,11 @@ class ToolCallHandler {
             return try await fetchWorkoutData()
         case "get_weather_data":
             guard let arguments = toolCall["arguments"] as? [String: Any],
-                let city = arguments["city"] as? String
+                let location = arguments["location"] as? String
             else {
                 throw ToolCallError.invalidArguments
             }
-            return try await fetchWeatherData(for: city)
+            return try await fetchWeatherData(for: location)
         default:
             throw ToolCallError.unknownTool(name)
         }
@@ -69,14 +69,13 @@ class ToolCallHandler {
             workouts, using: healthManager)
     }
 
-    private func fetchWeatherData(for city: String) async throws -> String {
-        loadingManager.startLoading(message: "Fetching weather data for \(city)...")
+    private func fetchWeatherData(for location: String) async throws -> String {
+        loadingManager.startLoading(message: "Fetching weather data for \(location)...")
 
         do {
-            // Add artificial delay for better UX
-            try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            try await Task.sleep(nanoseconds: 2_000_000_000)
 
-            let weather = try await weatherManager.fetchWeather(forCity: city)
+            let weather = try await weatherManager.fetchWeather(forCity: location)
             loadingManager.stopLoading()
             return OutputFormatter.formatWeatherData(weather)
         } catch {

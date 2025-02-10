@@ -54,7 +54,7 @@ class ModelService {
 
     func generate(
         messages: [[String: String]],
-        tools: [[String: Any]]? = nil,
+        tools: [[String: any Sendable]]? = nil,
         onTokens: @escaping (String) -> Void
     ) async throws -> MLXLMCommon.GenerateResult {
         let modelContainer = try await load()

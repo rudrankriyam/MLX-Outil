@@ -43,7 +43,7 @@ class UnifiedEvaluator: ObservableObject {
         case loaded(ModelContainer)
     }
 
-    static let availableTools: [[String: Any]] = [
+    static let availableTools: [[String: any Sendable]] = [
         [
             "type": "function",
             "function": [
@@ -60,16 +60,16 @@ class UnifiedEvaluator: ObservableObject {
             "type": "function",
             "function": [
                 "name": "get_weather_data",
-                "description": "Get current weather data for a specific city",
+                "description": "Get current weather data for a specific location",
                 "parameters": [
                     "type": "object",
                     "properties": [
-                        "city": [
+                        "location": [
                             "type": "string",
-                            "description": "The name of the city",
+                            "description": "The city and state, e.g. San Francisco, CA",
                         ]
                     ],
-                    "required": ["city"],
+                    "required": ["location"],
                 ] as [String: Any],
             ] as [String: Any],
         ],
@@ -115,22 +115,25 @@ class UnifiedEvaluator: ObservableObject {
 
         do {
             // Parse the JSON into a dictionary.
-            if let toolCall = try JSONSerialization.jsonObject(with: data)
-                as? [String: Any],
-                let name = toolCall["name"] as? String
+            if let toolCall = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let name = toolCall["name"] as? String,
+               let arguments = toolCall["arguments"] as? [String: Any]  
             {
-                print("Successfully parsed tool call with name: \(name)")
+                print("Successfully parsed tool call with name: \(name) and arguments: \(arguments)")
+                
                 switch name {
                 case "get_workout_summary":
                     let workoutSummary = try await fetchWorkoutData()
                     await continueConversation(
                         with: workoutSummary, for: "Workout Summary")
                 case "get_weather_data":
-                    if let arguments = toolCall["arguments"] as? [String: Any],
-                        let city = arguments["city"] as? String
-                    {
-                        let weatherData = try await fetchWeatherData(for: city)
-                        await continueConversation(with: weatherData, for: city)
+                    if let location = arguments["location"] as? String {
+                        print("Fetching weather for location: \(location)")
+                        let weatherData = try await fetchWeatherData(for: location)
+                        await continueConversation(with: weatherData, for: location)
+                    } else {
+                        print("Location argument not found or invalid")
+                        self.output += "\nError: Location parameter is required for weather data.\n"
                     }
                 default:
                     print("Unknown tool call: \(name)")
@@ -138,8 +141,7 @@ class UnifiedEvaluator: ObservableObject {
             }
         } catch {
             print("Error parsing tool call JSON: \(error)")
-            self.output +=
-                "\nError parsing tool call: \(error.localizedDescription)\n"
+            self.output += "\nError parsing tool call: \(error.localizedDescription)\n"
         }
     }
 
@@ -151,12 +153,12 @@ class UnifiedEvaluator: ObservableObject {
         return OutputFormatter.formatWeeklyWorkoutSummary(workouts, using: .shared)
     }
 
-    func fetchWeatherData(for city: String) async throws -> String {
+    func fetchWeatherData(for location: String) async throws -> String {
         do {
-            let weather = try await weatherManager.fetchWeather(forCity: city)
+            let weather = try await weatherManager.fetchWeather(forCity: location)
             return OutputFormatter.formatWeatherData(weather)
         } catch {
-            return "Unable to fetch weather data for \(city). Please try again."
+            return "Unable to fetch weather data for \(location). Please try again."
         }
     }
 
@@ -167,7 +169,7 @@ class UnifiedEvaluator: ObservableObject {
         self.output = ""
 
         do {
-            let messages = [
+            let messages: [[String: String]] = [
                 ["role": "system", "content": Constants.systemPrompt],
                 ["role": "user", "content": prompt],
             ]
