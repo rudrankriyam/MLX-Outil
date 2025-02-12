@@ -1,11 +1,5 @@
 import HealthKit
-import MLX
-import MLXLLM
-import MLXLMCommon
-import MLXRandom
-import Metal
 import SwiftUI
-import Tokenizers
 
 struct WorkoutView: View {
     @Environment(UnifiedEvaluator.self) private var evaluator
