@@ -6,9 +6,7 @@ import MLXRandom
 
 final class ConcreteModelContainer: CoreModelContainer, @unchecked Sendable {
     private var lock = NSLock()
-
     private(set) var onProgress: String = ""
-    
     private let modelConfiguration: ModelConfiguration
     private let generateParameters: GenerateParameters
     
@@ -25,7 +23,7 @@ final class ConcreteModelContainer: CoreModelContainer, @unchecked Sendable {
 
             let modelContainer = try await LLMModelFactory.shared.loadContainer(
                 configuration: modelConfiguration
-            ) { [modelConfiguration] progress in
+            ) { [unowned self] progress in
                 Task { @MainActor in
                     print(
                         "Downloading \(modelConfiguration.name): \(Int(progress.fractionCompleted * 100))%"
@@ -60,14 +58,13 @@ final class ConcreteModelContainer: CoreModelContainer, @unchecked Sendable {
                 input: input,
                 parameters: generateParameters,
                 context: context
-            ) { tokens in
+            ) { [unowned self] tokens in
                 if tokens.count % 2 == 0 {
-//                    self.lock.lock()
-//                    defer { self.lock.unlock() }
+                    self.lock.lock()
+                    defer { self.lock.unlock() }
                     let text = context.tokenizer.decode(tokens: tokens)
                     Task { @MainActor in
                         onProgress(text)
-//                        print(text)
                     }
                 }
                 return .more
