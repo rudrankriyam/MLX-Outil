@@ -12,12 +12,14 @@
 		0A8AD9F62D5553A900FC35B5 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 0A8AD9F52D5553A900FC35B5 /* MLXLLM */; };
 		0A8AD9F82D5553A900FC35B5 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 0A8AD9F72D5553A900FC35B5 /* MLXLMCommon */; };
 		8D758A852D5A57EF009AB6EC /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8D758A842D5A57EF009AB6EC /* MarkdownUI */; };
+		E56432262D5BDFF400180963 /* MLXModelService in Frameworks */ = {isa = PBXBuildFile; productRef = E56432252D5BDFF400180963 /* MLXModelService */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0A7458492D59229F002535FD /* ShimmerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerView.swift; sourceTree = "<group>"; };
 		0A74584B2D5922B7002535FD /* LoadingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingManager.swift; sourceTree = "<group>"; };
 		0AC155662CFBB30E00FBDD8E /* MLX Outil.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MLX Outil.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E56432232D5BAFE400180963 /* Core */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Core; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +37,7 @@
 			files = (
 				8D758A852D5A57EF009AB6EC /* MarkdownUI in Frameworks */,
 				0A8AD9F82D5553A900FC35B5 /* MLXLMCommon in Frameworks */,
+				E56432262D5BDFF400180963 /* MLXModelService in Frameworks */,
 				0A8AD9F62D5553A900FC35B5 /* MLXLLM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -49,6 +52,8 @@
 				0A74584B2D5922B7002535FD /* LoadingManager.swift */,
 				0AC155682CFBB30E00FBDD8E /* MLX Outil */,
 				0AC155672CFBB30E00FBDD8E /* Products */,
+				E56432232D5BAFE400180963 /* Core */,
+				E56432242D5BDFF400180963 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -58,6 +63,13 @@
 				0AC155662CFBB30E00FBDD8E /* MLX Outil.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E56432242D5BDFF400180963 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -83,6 +95,7 @@
 				0A8AD9F52D5553A900FC35B5 /* MLXLLM */,
 				0A8AD9F72D5553A900FC35B5 /* MLXLMCommon */,
 				8D758A842D5A57EF009AB6EC /* MarkdownUI */,
+				E56432252D5BDFF400180963 /* MLXModelService */,
 			);
 			productName = "MLX Outil";
 			productReference = 0AC155662CFBB30E00FBDD8E /* MLX Outil.app */;
@@ -272,7 +285,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MLX Outil/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 8E32BHD578;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -314,7 +327,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MLX Outil/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 8E32BHD578;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -404,6 +417,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8D758A832D5A57EF009AB6EC /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
 			productName = MarkdownUI;
+		};
+		E56432252D5BDFF400180963 /* MLXModelService */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MLXModelService;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
