@@ -1,20 +1,24 @@
-import Foundation
+//
+//  ConcreteModelContainer.swift
+//  Core
+//
+//  Created by Marlon Rugama on 2/11/25.
+//
+
+import SwiftUI
 import MLX
 import MLXLLM
 import MLXLMCommon
 import MLXRandom
 
-@MainActor
-class ModelService {
-    enum LoadState {
-        case idle
-        case loaded(ModelContainer)
-    }
+final class ConcreteModelContainer: CoreModelContainer, @unchecked Sendable {
+    private var lock = NSLock()
 
-    private var loadState = LoadState.idle
+    private(set) var onProgress: String = ""
+    
     private let modelConfiguration: ModelConfiguration
     private let generateParameters: GenerateParameters
-
+    
     init(
         modelConfiguration: ModelConfiguration,
         generateParameters: GenerateParameters
@@ -22,10 +26,8 @@ class ModelService {
         self.modelConfiguration = modelConfiguration
         self.generateParameters = generateParameters
     }
-
+    
     func load() async throws -> ModelContainer {
-        switch loadState {
-        case .idle:
             MLX.GPU.set(cacheLimit: 20 * 1024 * 1024)
 
             let modelContainer = try await LLMModelFactory.shared.loadContainer(
@@ -44,37 +46,35 @@ class ModelService {
             print(
                 "Loaded \(modelConfiguration.id). Weights: \(numParams / (1024*1024))M"
             )
-            loadState = .loaded(modelContainer)
             return modelContainer
-
-        case .loaded(let modelContainer):
-            return modelContainer
-        }
     }
-
+    
     func generate(
-        messages: [[String: String]],
-        tools: [[String: any Sendable]]? = nil,
-        onTokens: @escaping (String) -> Void
-    ) async throws -> MLXLMCommon.GenerateResult {
+        messages: [Message],
+        tools: [Tool]?,
+        onProgress: @escaping OnProgress
+    ) async throws -> ContainerResult {
         let modelContainer = try await load()
 
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
 
-        return try await modelContainer.perform { context in
+        return try await modelContainer.perform { context   in
             let input = try await context.processor.prepare(
                 input: .init(messages: messages, tools: tools)
             )
-
+            
             return try MLXLMCommon.generate(
                 input: input,
                 parameters: generateParameters,
                 context: context
             ) { tokens in
                 if tokens.count % 2 == 0 {
+//                    self.lock.lock()
+//                    defer { self.lock.unlock() }
                     let text = context.tokenizer.decode(tokens: tokens)
                     Task { @MainActor in
-                        onTokens(text)
+                        onProgress(text)
+//                        print(text)
                     }
                 }
                 return .more

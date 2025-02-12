@@ -1,8 +1,5 @@
-import MLX
-import MLXLLM
-import MLXLMCommon
-import MLXRandom
-import Foundation
+import MLXModelService
+import SwiftUI
 import HealthKit
 
 @MainActor
@@ -15,16 +12,13 @@ class UnifiedEvaluator {
     var stat = ""
 
     var toolCallState: ToolCallParsingState = .idle
-    var loadState = LoadState.idle
 
-    private let modelService: ModelService
+    private let modelService: CoreModelContainer
     private let toolCallHandler: ToolCallHandler
 
     init() {
-        self.modelService = ModelService(
-            modelConfiguration: ModelRegistry.qwen2_5_1_5b,
-            generateParameters: GenerateParameters(temperature: 0.5)
-        )
+        let modelService = CoreModelService()
+        self.modelService = modelService.provideModelContainer()
         
         self.toolCallHandler = ToolCallHandler(
             healthManager: HealthKitManager.shared,
@@ -39,11 +33,6 @@ class UnifiedEvaluator {
     private let weatherManager = WeatherKitManager.shared
 
     private var toolCallBuffer: String = ""
-
-    enum LoadState {
-        case idle
-        case loaded(ModelContainer)
-    }
 
     static let availableTools: [[String: any Sendable]] = [
         [
@@ -96,7 +85,9 @@ class UnifiedEvaluator {
                 if includingTools {
                     print("Text: \(text)")
                 } else {
-                    self?.output = text
+                    Task { @MainActor in
+                        self?.output = text
+                    }
                 }
             }
 
