@@ -6,8 +6,13 @@ struct WeatherView: View {
   @StateObject private var loadingManager = LoadingManager.shared
   @State private var prompt = "How's the weather today in Gurgaon and what should I wear?"
 
+#if os(macOS)
+  private let backgroundColor = Color(NSColor.windowBackgroundColor)
+  private let secondaryBackground = Color(NSColor.controlBackgroundColor)
+  #else
   private let backgroundColor = Color(.systemBackground)
   private let secondaryBackground = Color(.secondarySystemBackground)
+  #endif
   private let accentColor = Color.accentColor
 
   var body: some View {
