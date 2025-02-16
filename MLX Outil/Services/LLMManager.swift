@@ -92,7 +92,7 @@ class LLMManager {
     self.output = ""
 
     do {
-      let messages: [OutilMessage] = [
+      let messages: OutilMessage = [
         ["role": "system", "content": Constants.systemPrompt],
         ["role": "user", "content": prompt],
       ]

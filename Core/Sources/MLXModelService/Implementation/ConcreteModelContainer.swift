@@ -41,7 +41,7 @@ final class ConcreteModelContainer: CoreModelContainer, @unchecked Sendable {
     }
 
     func generate(
-        messages: [OutilMessage],
+        messages: OutilMessage,
         tools: [Tool]?,
         onProgress: @escaping OnProgress
     ) async throws -> ContainerResult {

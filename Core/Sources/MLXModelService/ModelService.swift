@@ -2,7 +2,7 @@ import MLXLLM
 import MLXLMCommon
 import SwiftUI
 
-public typealias OutilMessage = [String: String]
+public typealias OutilMessage = [[String: String]]
 
 public protocol CoreModelContainer
 where Self: Sendable, Self: Observable {
@@ -13,7 +13,7 @@ where Self: Sendable, Self: Observable {
     var onProgress: String { get }
 
     func generate(
-        messages: [OutilMessage],
+        messages: [[String: String]],
         tools: [Tool]?,
         onProgress: @escaping OnProgress
     ) async throws -> ContainerResult
