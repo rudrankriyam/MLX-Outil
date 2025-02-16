@@ -1,20 +1,13 @@
-//
-//  MLXOutilApp.swift
-//  MLX Outil
-//
-//  Created by Rudrank Riyam on 12/1/24.
-//
-
 import SwiftUI
 
 @main
 struct MLXOutilApp: App {
-  @State private var evaluator = UnifiedEvaluator()
+    @State private var llmManager = LLMManager()
 
-  var body: some Scene {
-    WindowGroup {
-      MainTabView()
-        .environment(evaluator)
+    var body: some Scene {
+        WindowGroup {
+            MainTabView()
+                .environment(llmManager)
+        }
     }
-  }
 }

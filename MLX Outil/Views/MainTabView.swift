@@ -1,14 +1,7 @@
-//
-//  MainTabView.swift
-//  MLX Outil
-//
-//  Created by Rudrank Riyam on 2/9/25.
-//
-
 import SwiftUI
 
 struct MainTabView: View {
-    @Environment(UnifiedEvaluator.self) var llm
+    @Environment(LLMManager.self) var llm
 
     var body: some View {
         TabView {
@@ -23,10 +16,4 @@ struct MainTabView: View {
                 }
         }
     }
-}
-
-#Preview {
-    @Previewable @State var evaluator = UnifiedEvaluator()
-    return MainTabView()
-        .environment(evaluator)
 }

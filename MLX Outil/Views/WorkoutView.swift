@@ -2,17 +2,17 @@ import HealthKit
 import SwiftUI
 
 struct WorkoutView: View {
-    @Environment(UnifiedEvaluator.self) private var evaluator
+    @Environment(LLMManager.self) private var evaluator
     @State private var prompt =
         "Summary of my workouts this week, and how I did in them."
 
-#if os(macOS)
-  private let backgroundColor = Color(NSColor.windowBackgroundColor)
-  private let secondaryBackground = Color(NSColor.controlBackgroundColor)
-  #else
-  private let backgroundColor = Color(.systemBackground)
-  private let secondaryBackground = Color(.secondarySystemBackground)
-  #endif
+    #if os(macOS)
+        private let backgroundColor = Color(NSColor.windowBackgroundColor)
+        private let secondaryBackground = Color(NSColor.controlBackgroundColor)
+    #else
+        private let backgroundColor = Color(.systemBackground)
+        private let secondaryBackground = Color(.secondarySystemBackground)
+    #endif
     private let accentColor = Color.accentColor
 
     /// Style options for displaying the LLM output
