@@ -15,7 +15,8 @@ The name **MLX Outil** is derived from the French word *outil*, which means "too
 - On-device inference using MLX Swift
 - Example tools implementation:
   - Weather information (You will have to provide your own bundle identifier which has WeatherKit checked)
-  - Workout summary data (still implementing)
+  - Workout summary data
+  - Web search with Duck Duck Go
 
 ## Requirements
 
