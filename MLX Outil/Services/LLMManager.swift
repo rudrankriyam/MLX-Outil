@@ -92,9 +92,9 @@ class LLMManager {
     self.output = ""
 
     do {
-      let messages: [Message] = [
-        Message(["role": "system", "content": Constants.systemPrompt]),
-        Message(["role": "user", "content": prompt]),
+      let messages: [OutilMessage] = [
+        ["role": "system", "content": Constants.systemPrompt],
+        ["role": "user", "content": prompt],
       ]
 
       let result = try await modelService.generate(
