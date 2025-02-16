@@ -2,10 +2,17 @@ import MLXLLM
 import MLXLMCommon
 import SwiftUI
 
+public struct Message: Sendable {
+    public let content: [String: String]
+    
+    public init(_ content: [String: String]) {
+        self.content = content
+    }
+}
+
 public protocol CoreModelContainer
 where Self: Sendable, Self: Observable {
     typealias ContainerResult = MLXLMCommon.GenerateResult
-    typealias Message = [String: String]
     typealias Tool = [String: any Sendable]
     typealias OnProgress = @Sendable (String) -> Void
 

@@ -51,7 +51,7 @@ final class ConcreteModelContainer: CoreModelContainer, @unchecked Sendable {
 
         return try await modelContainer.perform { context in
             let input = try await context.processor.prepare(
-                input: .init(messages: messages, tools: tools)
+                input: .init(messages: messages.map(\.content), tools: tools)
             )
 
             return try MLXLMCommon.generate(
