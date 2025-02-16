@@ -25,18 +25,12 @@ final class ToolCallHandlerTests: XCTestCase {
         super.tearDown()
     }
 
+    // MARK: - Weather Tool Call Tests
+
     func testValidWeatherToolCall() async throws {
         // Given
-        let validToolCall = """
-            {
-                "name": "get_weather_data",
-                "arguments": {
-                    "location": "New York, NY"
-                }
-            }
-            """
-
-        mockWeatherManager.mockWeatherData = WeatherKitManager.WeatherData(
+        let validToolCall = makeWeatherToolCall(location: "New York, NY")
+        let mockWeather = WeatherKitManager.WeatherData(
             temperature: 20.0,
             condition: "Sunny",
             humidity: 0.45,
@@ -47,6 +41,7 @@ final class ToolCallHandlerTests: XCTestCase {
             pressure: 1013,
             precipitationChance: 0.1
         )
+        mockWeatherManager.mockWeatherData = mockWeather
 
         // When
         let result = try await toolCallHandler.processLLMOutput(
@@ -54,35 +49,55 @@ final class ToolCallHandlerTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertTrue(result?.contains("Current Weather:") ?? false)
-        XCTAssertTrue(result?.contains("Temperature: 20.0°C") ?? false)
-        XCTAssertTrue(result?.contains("Condition: Sunny") ?? false)
-        XCTAssertTrue(result?.contains("Humidity: 45%") ?? false)
-        XCTAssertTrue(result?.contains("Wind Speed: 10.0 km/h") ?? false)
+        let expectedStrings = [
+            "Current Weather:",
+            "Temperature: 20.0°C",
+            "Condition: Sunny",
+            "Humidity: 45%",
+            "Wind Speed: 10.0 km/h"
+        ]
+        assertResultContains(result, expectedStrings)
     }
+
+    func testWeatherToolCallWithEmptyLocation() async {
+        // Given
+        let invalidToolCall = makeWeatherToolCall(location: "")
+
+        // When/Then
+        await assertThrowsError(
+            try await toolCallHandler.processLLMOutput(
+                "<tool_call>\(invalidToolCall)</tool_call>"),
+            WeatherKitError.locationNotFound
+        )
+    }
+
+    // MARK: - Error Cases
 
     func testInvalidJSON() async {
         // Given
         let invalidJSON = "<tool_call>{invalid json}</tool_call>"
 
         // When/Then
-        do {
-            _ = try await toolCallHandler.processLLMOutput(invalidJSON)
-            XCTFail("Expected error for invalid JSON")
-        } catch {
+        await assertThrowsError(
+            try await toolCallHandler.processLLMOutput(invalidJSON)
+        ) { error in
             XCTAssertTrue(error is DecodingError)
         }
     }
 
     func testPartialToolCall() async throws {
         // Given
-        let partialToolCall = "<tool_call>{\"name\": \"get_weather_data\""
+        let partialCalls = [
+            "<tool_call>",
+            "<tool_call>{\"name\": \"get_weather_data\"",
+            "<tool_call>{\"name\": \"get_weather_data\", \"arguments\": {"
+        ]
 
-        // When
-        let result = try await toolCallHandler.processLLMOutput(partialToolCall)
-
-        // Then
-        XCTAssertNil(result, "Partial tool call should return nil")
+        // When/Then
+        for call in partialCalls {
+            let result = try await toolCallHandler.processLLMOutput(call)
+            XCTAssertNil(result, "Partial tool call should return nil: \(call)")
+        }
     }
 
     func testInvalidToolName() async {
@@ -97,42 +112,116 @@ final class ToolCallHandlerTests: XCTestCase {
             """
 
         // When/Then
-        do {
-            _ = try await toolCallHandler.processLLMOutput(
+        await assertThrowsError(
+            try await toolCallHandler.processLLMOutput(
                 "<tool_call>\(invalidToolCall)</tool_call>")
-            XCTFail("Expected error for invalid tool name")
-        } catch let decodingError as DecodingError {
-            // The ToolCallType enum will fail to decode with an invalid name
-            switch decodingError {
-            case .dataCorrupted, .typeMismatch:
-                // Test passes as we expect a decoding error for invalid enum case
-                break
-            default:
-                XCTFail(
-                    "Expected decoding error for invalid tool name but got \(decodingError)"
+        ) { error in
+            XCTAssertTrue(error is DecodingError)
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    private func makeWeatherToolCall(location: String) -> String {
+        return """
+            {
+                "name": "get_weather_data",
+                "arguments": {
+                    "location": "\(location)"
+                }
+            }
+            """
+    }
+
+    private func makeWorkoutToolCall() -> String {
+        return """
+            {
+                "name": "get_workout_summary",
+                "arguments": {}
+            }
+            """
+    }
+
+    private func assertResultContains(_ result: String?, _ expectedStrings: [String]) {
+        guard let result else {
+            XCTFail("Result should not be nil")
+            return
+        }
+
+        for expected in expectedStrings {
+            XCTAssertTrue(
+                result.contains(expected),
+                "Result should contain '\(expected)' but got: \(result)"
+            )
+        }
+    }
+
+    private func assertThrowsError<T>(_ expression: @autoclosure () async throws -> T,
+                                     _ expectedError: Error? = nil,
+                                     file: StaticString = #file,
+                                     line: UInt = #line,
+                                     _ errorHandler: ((Error) -> Void)? = nil) async {
+        do {
+            _ = try await expression()
+            XCTFail("Expected error but no error was thrown", file: file, line: line)
+        } catch {
+            if let expectedError = expectedError {
+                XCTAssertEqual(
+                    error as? WeatherKitError,
+                    expectedError as? WeatherKitError,
+                    file: file,
+                    line: line
                 )
             }
-        } catch {
-            XCTFail("Expected DecodingError but got \(error)")
+            errorHandler?(error)
         }
+    }
+
+    private func createMockWorkout(duration: TimeInterval,
+                                 distance: Double,
+                                 energyBurned: Double,
+                                 workoutType: HKWorkoutActivityType) -> HKWorkout {
+        return HKWorkout(
+            activityType: workoutType,
+            start: Date(),
+            end: Date().addingTimeInterval(duration),
+            duration: duration,
+            totalEnergyBurned: HKQuantity(
+                unit: .kilocalorie(),
+                doubleValue: energyBurned
+            ),
+            totalDistance: HKQuantity(
+                unit: .meter(),
+                doubleValue: distance
+            ),
+            metadata: nil
+        )
     }
 }
 
 // MARK: - Mock Classes
 private class MockHealthKitManager: HealthKitManager {
     var isAuthorized: Bool
+    var mockWorkouts: [HKWorkout] = []
 
     init(isAuthorized: Bool) {
         self.isAuthorized = isAuthorized
         super.init()
     }
 
-    override func requestAuthorization() async throws {}
+    override func requestAuthorization() async throws {
+        if !isAuthorized {
+            throw NSError(
+                domain: "com.apple.healthkit",
+                code: 5,
+                userInfo: [NSLocalizedDescriptionKey: "Authorization not determined"]
+            )
+        }
+    }
 
-    func fetchWorkouts(for dateRange: ClosedRange<Date>) async throws
-        -> [HKWorkout]
-    {
-        return []
+    func fetchWorkouts(for timeRange: ClosedRange<Date>) async throws -> [HKWorkout] {
+        try await requestAuthorization()
+        return mockWorkouts
     }
 }
 
@@ -144,9 +233,10 @@ private class MockWeatherKitManager: WeatherKitManager {
         self.isAuthorized = isAuthorized
     }
 
-    override func fetchWeather(forCity location: String) async throws
-        -> WeatherData
-    {
+    override func fetchWeather(forCity location: String) async throws -> WeatherData {
+        if location.isEmpty {
+            throw WeatherKitError.locationNotFound
+        }
         guard let mockWeatherData else {
             throw WeatherKitError.locationNotFound
         }
