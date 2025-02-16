@@ -1,6 +1,6 @@
-import SwiftUI
 import MLXLLM
 import MLXLMCommon
+import SwiftUI
 
 public protocol CoreModelContainer
 where Self: Sendable, Self: Observable {
@@ -8,9 +8,9 @@ where Self: Sendable, Self: Observable {
     typealias Message = [String: String]
     typealias Tool = [String: any Sendable]
     typealias OnProgress = @Sendable (String) -> Void
-    
+
     var onProgress: String { get }
-    
+
     func generate(
         messages: [Message],
         tools: [Tool]?,
@@ -19,8 +19,8 @@ where Self: Sendable, Self: Observable {
 }
 
 public struct CoreModelService: Sendable {
-    public init () { }
-    
+    public init() {}
+
     public func provideModelContainer() -> any CoreModelContainer {
         ConcreteModelContainer(
             modelConfiguration: ModelRegistry.qwen2_5_1_5b,
@@ -28,4 +28,3 @@ public struct CoreModelService: Sendable {
         )
     }
 }
-

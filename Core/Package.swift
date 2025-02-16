@@ -10,17 +10,19 @@ let package = Package(
         .library(
             name: "MLXModelService",
             targets: ["MLXModelService"]
-        ),
+        )
     ],
     dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift-examples.git", branch: "main")
+        .package(
+            url: "https://github.com/ml-explore/mlx-swift-examples.git",
+            branch: "main")
     ],
     targets: [
         .target(
             name: "MLXModelService",
             dependencies: [
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
-                .product(name: "MLXLMCommon", package: "mlx-swift-examples")
+                .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
             ]
         )
     ]
