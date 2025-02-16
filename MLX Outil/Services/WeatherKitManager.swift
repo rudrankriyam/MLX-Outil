@@ -1,6 +1,6 @@
+import CoreLocation
 import Foundation
 import WeatherKit
-import CoreLocation
 
 class WeatherKitManager {
     // Singleton instance
@@ -35,7 +35,8 @@ class WeatherKitManager {
     // Add Logger enum
     private enum Logger {
         static func log(_ message: String, type: String = "INFO") {
-            let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+            let timestamp = DateFormatter.localizedString(
+                from: Date(), dateStyle: .none, timeStyle: .medium)
             print("[WeatherKit][\(type)] [\(timestamp)]: \(message)")
         }
     }
@@ -47,13 +48,16 @@ class WeatherKitManager {
         do {
             Logger.log("Geocoding city: \(city)")
             let coordinates = try await getCoordinates(for: city)
-            Logger.log("Successfully geocoded \(city) to coordinates: \(coordinates.coordinate.latitude), \(coordinates.coordinate.longitude)")
+            Logger.log(
+                "Successfully geocoded \(city) to coordinates: \(coordinates.coordinate.latitude), \(coordinates.coordinate.longitude)"
+            )
 
             let weather = try await fetchWeather(for: coordinates)
             Logger.log("Successfully fetched weather data for \(city)")
             return weather
         } catch {
-            Logger.log("Failed to fetch weather for \(city): \(error)", type: "ERROR")
+            Logger.log(
+                "Failed to fetch weather for \(city): \(error)", type: "ERROR")
             throw error
         }
     }
@@ -85,7 +89,9 @@ class WeatherKitManager {
             throw WeatherKitError.locationNotFound
         }
 
-        Logger.log("Current location obtained: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        Logger.log(
+            "Current location obtained: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+        )
         return try await fetchWeather(for: location)
     }
 
@@ -113,10 +119,15 @@ class WeatherKitManager {
         }
     }
 
-    private func fetchWeatherFromOpenMeteo(for location: CLLocation) async throws -> WeatherData {
-        Logger.log("Falling back to OpenMeteo for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+    private func fetchWeatherFromOpenMeteo(for location: CLLocation)
+        async throws -> WeatherData
+    {
+        Logger.log(
+            "Falling back to OpenMeteo for location: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+        )
 
-        let urlString = "\(openMeteoBaseURL)?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,precipitation,windspeed_10m"
+        let urlString =
+            "\(openMeteoBaseURL)?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,precipitation,windspeed_10m"
 
         guard let url = URL(string: urlString) else {
             throw WeatherKitError.weatherDataUnavailable
@@ -124,7 +135,8 @@ class WeatherKitManager {
 
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            let response = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
+            let response = try JSONDecoder().decode(
+                OpenMeteoResponse.self, from: data)
 
             return WeatherData(
                 temperature: response.current.temperature,
@@ -143,8 +155,12 @@ class WeatherKitManager {
         }
     }
 
-    private func fetchWeather(for location: CLLocation) async throws -> WeatherData {
-        Logger.log("Starting weather service request for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+    private func fetchWeather(for location: CLLocation) async throws
+        -> WeatherData
+    {
+        Logger.log(
+            "Starting weather service request for location: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+        )
 
         do {
             let weather = try await weatherService.weather(for: location)
@@ -159,13 +175,16 @@ class WeatherKitManager {
                 uvIndex: weather.currentWeather.uvIndex.value,
                 visibility: weather.currentWeather.visibility.value,
                 pressure: weather.currentWeather.pressure.value,
-                precipitationChance: weather.hourlyForecast.first?.precipitationChance ?? 0.0
+                precipitationChance: weather.hourlyForecast.first?
+                    .precipitationChance ?? 0.0
             )
 
             Logger.log("Weather data processed successfully: \(weatherData)")
             return weatherData
         } catch {
-            Logger.log("WeatherKit request failed, attempting OpenMeteo fallback: \(error)", type: "WARNING")
+            Logger.log(
+                "WeatherKit request failed, attempting OpenMeteo fallback: \(error)",
+                type: "WARNING")
             return try await fetchWeatherFromOpenMeteo(for: location)
         }
     }
@@ -174,7 +193,9 @@ class WeatherKitManager {
     func requestLocationAuthorization() {
         Logger.log("Requesting location authorization")
         locationManager.requestWhenInUseAuthorization()
-        Logger.log("Location authorization status: \(locationManager.authorizationStatus.rawValue)")
+        Logger.log(
+            "Location authorization status: \(locationManager.authorizationStatus.rawValue)"
+        )
     }
 }
 
@@ -182,11 +203,11 @@ class WeatherKitManager {
 extension WeatherKitManager.WeatherData: CustomStringConvertible {
     var description: String {
         return """
-        Temperature: \(temperature)°C, 
-        Feels Like: \(feelsLike)°C, 
-        Condition: \(condition), 
-        Humidity: \(humidity * 100)%, 
-        Wind Speed: \(windSpeed) km/h
-        """
+            Temperature: \(temperature)°C, 
+            Feels Like: \(feelsLike)°C, 
+            Condition: \(condition), 
+            Humidity: \(humidity * 100)%, 
+            Wind Speed: \(windSpeed) km/h
+            """
     }
 }

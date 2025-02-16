@@ -1,10 +1,10 @@
+import HealthKit
 import MLXModelService
 import SwiftUI
-import HealthKit
 
 @MainActor
 @Observable
-class UnifiedEvaluator {
+class LLMManager {
 
     var running = false
     var output = ""
@@ -19,7 +19,7 @@ class UnifiedEvaluator {
     init() {
         let modelService = CoreModelService()
         self.modelService = modelService.provideModelContainer()
-        
+
         self.toolCallHandler = ToolCallHandler(
             healthManager: HealthKitManager.shared,
             weatherManager: WeatherKitManager.shared
@@ -51,13 +51,15 @@ class UnifiedEvaluator {
             "type": "function",
             "function": [
                 "name": "get_weather_data",
-                "description": "Get current weather data for a specific location",
+                "description":
+                    "Get current weather data for a specific location",
                 "parameters": [
                     "type": "object",
                     "properties": [
                         "location": [
                             "type": "string",
-                            "description": "The city and state, e.g. New Delhi, Delhi",
+                            "description":
+                                "The city and state, e.g. New Delhi, Delhi",
                         ]
                     ],
                     "required": ["location"],

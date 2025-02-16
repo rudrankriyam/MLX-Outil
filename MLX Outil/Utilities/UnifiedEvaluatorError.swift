@@ -1,10 +1,3 @@
-//
-//  UnifiedEvaluatorError.swift
-//  MLX Outil
-//
-//  Created by Rudrank Riyam on 2/9/25.
-//
-
 import Foundation
 
 enum UnifiedEvaluatorError: LocalizedError {
