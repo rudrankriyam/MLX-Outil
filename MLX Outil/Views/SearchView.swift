@@ -4,7 +4,7 @@ import SwiftUI
 struct SearchView: View {
   @Environment(LLMManager.self) private var evaluator
   @StateObject private var loadingManager = LoadingManager.shared
-  @State private var prompt = "What is the capital of France?"
+  @State private var prompt = "Search web for iOS 18 mesh gradient"
 
   #if os(macOS)
     private let backgroundColor = Color(NSColor.windowBackgroundColor)
