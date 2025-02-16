@@ -5,7 +5,7 @@ class HealthKitManager {
     static let shared = HealthKitManager()
     private let healthStore = HKHealthStore()
 
-    private init() {}
+    init() {}
 
     enum HealthKitError: Error {
         case unavailable

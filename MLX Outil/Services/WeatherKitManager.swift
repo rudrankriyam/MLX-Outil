@@ -2,24 +2,21 @@ import CoreLocation
 import Foundation
 import WeatherKit
 
+public enum WeatherKitError: Error {
+    case locationNotFound
+    case weatherDataUnavailable
+    case unauthorized
+}
+
 class WeatherKitManager {
-    // Singleton instance
     static let shared = WeatherKitManager()
 
     // WeatherService instance for fetching weather data
     private let weatherService = WeatherService()
     private let locationManager = CLLocationManager()
 
-    private init() {}
+    init() {}
 
-    // Error types for weather-related operations
-    enum WeatherKitError: Error {
-        case locationNotFound
-        case weatherDataUnavailable
-        case unauthorized
-    }
-
-    // Weather data model to hold the fetched information
     struct WeatherData {
         let temperature: Double
         let condition: String
