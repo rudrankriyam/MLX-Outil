@@ -21,12 +21,12 @@ import Foundation
  }
  
  // 2. Register your tool handlers at app startup
- func setupToolHandlers() {
+ func setupToolHandlers() async {
      let weatherHandler = WeatherToolHandler(weatherService: MyWeatherService())
      let searchHandler = SearchToolHandler(searchService: MySearchService())
      
-     ToolRegistry.shared.register(toolType: WeatherToolType.getWeatherData, handler: weatherHandler)
-     ToolRegistry.shared.register(toolType: SearchToolType.searchDuckDuckGo, handler: searchHandler)
+     await ToolRegistry.shared.register(toolType: WeatherToolType.getWeatherData, handler: weatherHandler)
+     await ToolRegistry.shared.register(toolType: SearchToolType.searchDuckDuckGo, handler: searchHandler)
  }
  
  // 3. Create your custom tool call handler
@@ -44,7 +44,7 @@ import Foundation
          do {
              let toolNameInfo = try JSONDecoder().decode(ToolName.self, from: data)
              
-             guard let handler = ToolRegistry.shared.handler(for: toolNameInfo.name) else {
+             guard let handler = await ToolRegistry.shared.handler(for: toolNameInfo.name) else {
                  throw ToolCallError.unknownTool(toolNameInfo.name)
              }
              
@@ -107,4 +107,4 @@ import Foundation
      let role: String
      let content: String
  }
- */
+*/

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Search tool type
-public enum SearchToolType: String, ToolCallTypeProtocol {
+public enum SearchToolType: String, ToolCallTypeProtocol, Sendable {
     case searchDuckDuckGo = "search_duckduckgo"
     
     public var displayName: String {
@@ -32,11 +32,16 @@ public struct SearchArguments: ArgumentProtocol {
     }
 }
 
+/// Protocol for search services
+public protocol SearchServiceProtocol: Sendable {
+    func search(query: String) async throws -> String
+}
+
 /// Search tool handler
-public class SearchToolHandler: ToolRegistry.ToolHandlerProtocol {
-    private let searchService: SearchServiceProtocol
+public final class SearchToolHandler: ToolRegistry.ToolHandlerProtocol {
+    private let searchService: any SearchServiceProtocol
     
-    public init(searchService: SearchServiceProtocol) {
+    public init(searchService: any SearchServiceProtocol) {
         self.searchService = searchService
     }
     
@@ -46,9 +51,4 @@ public class SearchToolHandler: ToolRegistry.ToolHandlerProtocol {
         
         return try await searchService.search(query: arguments.query)
     }
-}
-
-/// Protocol for search services
-public protocol SearchServiceProtocol {
-    func search(query: String) async throws -> String
 }

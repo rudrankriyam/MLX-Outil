@@ -1,7 +1,7 @@
 import Foundation
 
 /// Registry for tool types and their argument handlers
-public class ToolRegistry {
+public actor ToolRegistry {
     /// Shared instance of the registry
     public static let shared = ToolRegistry()
     
@@ -29,7 +29,7 @@ public class ToolRegistry {
     }
     
     /// Protocol for tool handlers
-    public protocol ToolHandlerProtocol {
+    public protocol ToolHandlerProtocol: Sendable {
         /// Handle a tool call with arguments
         /// - Parameter json: The JSON representing the arguments
         /// - Returns: The result of handling the tool call

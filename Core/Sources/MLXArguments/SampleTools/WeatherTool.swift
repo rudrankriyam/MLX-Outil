@@ -1,7 +1,7 @@
 import Foundation
 
 /// Weather tool type
-public enum WeatherToolType: String, ToolCallTypeProtocol {
+public enum WeatherToolType: String, ToolCallTypeProtocol, Sendable {
     case getWeatherData = "get_weather_data"
     
     public var displayName: String {
@@ -32,11 +32,16 @@ public struct WeatherArguments: ArgumentProtocol {
     }
 }
 
+/// Protocol for weather services
+public protocol WeatherServiceProtocol: Sendable {
+    func fetchWeather(for location: String) async throws -> String
+}
+
 /// Weather tool handler
-public class WeatherToolHandler: ToolRegistry.ToolHandlerProtocol {
-    private let weatherService: WeatherServiceProtocol
+public final class WeatherToolHandler: ToolRegistry.ToolHandlerProtocol {
+    private let weatherService: any WeatherServiceProtocol
     
-    public init(weatherService: WeatherServiceProtocol) {
+    public init(weatherService: any WeatherServiceProtocol) {
         self.weatherService = weatherService
     }
     
@@ -46,9 +51,4 @@ public class WeatherToolHandler: ToolRegistry.ToolHandlerProtocol {
         
         return try await weatherService.fetchWeather(for: arguments.location)
     }
-}
-
-/// Protocol for weather services
-public protocol WeatherServiceProtocol {
-    func fetchWeather(for location: String) async throws -> String
 }
