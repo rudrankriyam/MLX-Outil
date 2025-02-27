@@ -79,7 +79,7 @@ class ToolCallHandler {
         self.weatherManager = weatherManager
     }
     
-    func processLLMOutput(_ text: String) async throws -> String? {
+    func processLLMOutput(_ text: String) async throws -> String {
         logger.debug("Processing LLM output: \(text)")
         
         if text.contains("<|python_tag|>") {
@@ -111,8 +111,7 @@ class ToolCallHandler {
             toolCallBuffer = ""
             return result
         }
-        logger.debug("Partial tool call received, waiting for more input")
-        return nil
+        throw ToolCallError.invalidArguments
     }
     
     private func handleToolCall(_ jsonString: String) async throws -> String {
@@ -153,13 +152,13 @@ class ToolCallHandler {
         return result
     }
     
-    private func handleLlamaFormat(_ text: String) async throws -> String? {
+    private func handleLlamaFormat(_ text: String) async throws -> String {
         logger.debug("Handling Llama format for text: \(text)")
         
         guard let startRange = text.range(of: "<|python_tag|>"),
               let endRange = text.range(of: "<|eom_id|>") else {
             logger.error("Invalid Llama format: missing required tags")
-            return nil
+            throw ToolCallError.invalidArguments
         }
         
         let startIndex = startRange.upperBound
@@ -228,7 +227,7 @@ class ToolCallHandler {
     }
 }
 
-enum ToolCallError: Error {
+enum ToolCallError: Error, Equatable {
     case invalidJSON
     case invalidArguments
     case unknownTool(String)
