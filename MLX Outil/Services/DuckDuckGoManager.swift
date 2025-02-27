@@ -17,7 +17,7 @@ class DuckDuckGoManager {
         var components = URLComponents()
         components.scheme = "https"
         components.host = "api.duckduckgo.com"
-        components.path = "/" 
+        components.path = "/"
         components.queryItems = [
             URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "format", value: "json"),

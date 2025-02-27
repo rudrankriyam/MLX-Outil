@@ -5,8 +5,8 @@ import XCTest
 
 final class ToolCallHandlerTests: XCTestCase {
     var toolCallHandler: ToolCallHandler!
-    fileprivate var mockHealthManager: MockHealthKitManager!
-    fileprivate var mockWeatherManager: MockWeatherKitManager!
+    var mockHealthManager: MockHealthKitManager!
+    var mockWeatherManager: MockWeatherKitManager!
 
     override func setUp() {
         super.setUp()
@@ -54,7 +54,7 @@ final class ToolCallHandlerTests: XCTestCase {
             "Temperature: 20.0°C",
             "Condition: Sunny",
             "Humidity: 45%",
-            "Wind Speed: 10.0 km/h"
+            "Wind Speed: 10.0 km/h",
         ]
         assertResultContains(result, expectedStrings)
     }
@@ -85,18 +85,21 @@ final class ToolCallHandlerTests: XCTestCase {
         }
     }
 
-    func testPartialToolCall() async throws {
+    func testPartialToolCall() async {
         // Given
         let partialCalls = [
             "<tool_call>",
             "<tool_call>{\"name\": \"get_weather_data\"",
-            "<tool_call>{\"name\": \"get_weather_data\", \"arguments\": {"
+            "<tool_call>{\"name\": \"get_weather_data\", \"arguments\": {",
         ]
 
         // When/Then
         for call in partialCalls {
-            let result = try await toolCallHandler.processLLMOutput(call)
-            XCTAssertNil(result, "Partial tool call should return nil: \(call)")
+            await assertThrowsError(
+                try await toolCallHandler.processLLMOutput(call)
+            ) { error in
+                XCTAssertEqual(error as? ToolCallError, .invalidArguments)
+            }
         }
     }
 
@@ -142,7 +145,9 @@ final class ToolCallHandlerTests: XCTestCase {
             """
     }
 
-    private func assertResultContains(_ result: String?, _ expectedStrings: [String]) {
+    private func assertResultContains(
+        _ result: String?, _ expectedStrings: [String]
+    ) {
         guard let result else {
             XCTFail("Result should not be nil")
             return
@@ -156,14 +161,18 @@ final class ToolCallHandlerTests: XCTestCase {
         }
     }
 
-    private func assertThrowsError<T>(_ expression: @autoclosure () async throws -> T,
-                                     _ expectedError: Error? = nil,
-                                     file: StaticString = #file,
-                                     line: UInt = #line,
-                                     _ errorHandler: ((Error) -> Void)? = nil) async {
+    private func assertThrowsError<T>(
+        _ expression: @autoclosure () async throws -> T,
+        _ expectedError: Error? = nil,
+        file: StaticString = #file,
+        line: UInt = #line,
+        _ errorHandler: ((Error) -> Void)? = nil
+    ) async {
         do {
             _ = try await expression()
-            XCTFail("Expected error but no error was thrown", file: file, line: line)
+            XCTFail(
+                "Expected error but no error was thrown", file: file, line: line
+            )
         } catch {
             if let expectedError = expectedError {
                 XCTAssertEqual(
@@ -177,10 +186,12 @@ final class ToolCallHandlerTests: XCTestCase {
         }
     }
 
-    private func createMockWorkout(duration: TimeInterval,
-                                 distance: Double,
-                                 energyBurned: Double,
-                                 workoutType: HKWorkoutActivityType) -> HKWorkout {
+    private func createMockWorkout(
+        duration: TimeInterval,
+        distance: Double,
+        energyBurned: Double,
+        workoutType: HKWorkoutActivityType
+    ) -> HKWorkout {
         return HKWorkout(
             activityType: workoutType,
             start: Date(),
@@ -197,49 +208,147 @@ final class ToolCallHandlerTests: XCTestCase {
             metadata: nil
         )
     }
-}
 
-// MARK: - Mock Classes
-private class MockHealthKitManager: HealthKitManager {
-    var isAuthorized: Bool
-    var mockWorkouts: [HKWorkout] = []
+    func testValidLlamaFormatWeatherToolCall() async throws {
+        // Given - full LLM output format with all tags
+        let llamaToolCall = """
+          <|python_tag|>{"name": "get_weather_data", "parameters": {"location": "New York, NY"}}<|eom_id|><|start_header_id|>assistant<|end_header_id|>
+          This will return the current weather conditions in New York, NY. Based on this data, you can make informed decisions about your outdoor activities.
+          """
 
-    init(isAuthorized: Bool) {
-        self.isAuthorized = isAuthorized
-        super.init()
+        let mockWeather = WeatherKitManager.WeatherData(
+            temperature: 20.0,
+            condition: "Sunny",
+            humidity: 0.45,
+            windSpeed: 10.0,
+            feelsLike: 22.0,
+            uvIndex: 5,
+            visibility: 10000,
+            pressure: 1013,
+            precipitationChance: 0.1
+        )
+        mockWeatherManager.mockWeatherData = mockWeather
+
+        // When
+        let result = try await toolCallHandler.processLLMOutput(llamaToolCall)
+
+        // Then
+        XCTAssertNotNil(result)
+        let expectedStrings = [
+            "Current Weather:",
+            "Temperature: 20.0°C",
+            "Condition: Sunny",
+            "Humidity: 45%",
+            "Wind Speed: 10.0 km/h"
+        ]
+        assertResultContains(result, expectedStrings)
     }
 
-    override func requestAuthorization() async throws {
-        if !isAuthorized {
-            throw NSError(
-                domain: "com.apple.healthkit",
-                code: 5,
-                userInfo: [NSLocalizedDescriptionKey: "Authorization not determined"]
-            )
+    func testLlamaFormatMissingTags() async {
+        // Given - test missing tag cases with full format
+        let missingStartTag = """
+        {"name": "get_weather_data", "parameters": {"location": "New York, NY"}}
+        This will return the current weather conditions in New York, NY.
+        """
+        
+        let missingEndTag = """
+         {"name": "get_weather_data", "parameters": {"location": "New York, NY"}}
+        This will return the current weather conditions in New York, NY.
+        """
+
+        // When/Then - both should throw invalidArguments
+        await assertThrowsError(
+            try await toolCallHandler.processLLMOutput(missingStartTag)
+        ) { error in
+            XCTAssertEqual(error as? ToolCallError, .invalidArguments)
+        }
+
+        await assertThrowsError(
+            try await toolCallHandler.processLLMOutput(missingEndTag)
+        ) { error in
+            XCTAssertEqual(error as? ToolCallError, .invalidArguments)
         }
     }
 
-    func fetchWorkouts(for timeRange: ClosedRange<Date>) async throws -> [HKWorkout] {
-        try await requestAuthorization()
-        return mockWorkouts
-    }
-}
+    func testLlamaFormatInvalidJSON() async {
+        // Given
+        let invalidJSON = """
+         invalid json here
+        This is the explanation text.
+        """
 
-private class MockWeatherKitManager: WeatherKitManager {
-    var mockWeatherData: WeatherData?
-    var isAuthorized: Bool
-
-    init(isAuthorized: Bool) {
-        self.isAuthorized = isAuthorized
-    }
-
-    override func fetchWeather(forCity location: String) async throws -> WeatherData {
-        if location.isEmpty {
-            throw WeatherKitError.locationNotFound
+        // When/Then
+        await assertThrowsError(
+            try await toolCallHandler.processLLMOutput(invalidJSON)
+        ) { error in
+            XCTAssertEqual(error as? ToolCallError, .invalidArguments)
         }
-        guard let mockWeatherData else {
-            throw WeatherKitError.locationNotFound
+    }
+
+    func testLlamaFormatInvalidToolName() async {
+        // Given
+        let invalidToolCall = """
+         {"name": "invalid_tool", "parameters": {"location": "New York"}}
+        This will not work because the tool name is invalid.
+        """
+
+        // When/Then
+        await assertThrowsError(
+            try await toolCallHandler.processLLMOutput(invalidToolCall)
+        ) { error in
+            XCTAssertEqual(error as? ToolCallError, .invalidArguments)
         }
-        return mockWeatherData
+    }
+
+    // MARK: - Mock Classes
+    class MockHealthKitManager: HealthKitManager {
+        var isAuthorized: Bool
+        var mockWorkouts: [HKWorkout] = []
+
+        init(isAuthorized: Bool) {
+            self.isAuthorized = isAuthorized
+            super.init()
+        }
+
+        override func requestAuthorization() async throws {
+            if !isAuthorized {
+                throw NSError(
+                    domain: "com.apple.healthkit",
+                    code: 5,
+                    userInfo: [
+                        NSLocalizedDescriptionKey:
+                            "Authorization not determined"
+                    ]
+                )
+            }
+        }
+
+        func fetchWorkouts(for timeRange: ClosedRange<Date>) async throws
+            -> [HKWorkout]
+        {
+            try await requestAuthorization()
+            return mockWorkouts
+        }
+    }
+
+    class MockWeatherKitManager: WeatherKitManager {
+        var mockWeatherData: WeatherData?
+        var isAuthorized: Bool
+
+        init(isAuthorized: Bool) {
+            self.isAuthorized = isAuthorized
+        }
+
+        override func fetchWeather(forCity location: String) async throws
+            -> WeatherData
+        {
+            if location.isEmpty {
+                throw WeatherKitError.locationNotFound
+            }
+            guard let mockWeatherData else {
+                throw WeatherKitError.locationNotFound
+            }
+            return mockWeatherData
+        }
     }
 }
