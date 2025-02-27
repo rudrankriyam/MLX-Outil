@@ -10,6 +10,10 @@ let package = Package(
         .library(
             name: "MLXModelService",
             targets: ["MLXModelService"]
+        ),
+        .library(
+            name: "MLXArguments",
+            targets: ["MLXArguments"]
         )
     ],
     dependencies: [
@@ -23,6 +27,10 @@ let package = Package(
             dependencies: [
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
             ]
+        ),
+        .target(
+            name: "MLXArguments",
+            dependencies: []
         )
     ]
 )
