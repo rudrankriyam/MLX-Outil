@@ -8,6 +8,14 @@ The name **MLX Outil** is derived from the French word *outil*, which means "too
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange)
 ![MLX](https://img.shields.io/badge/MLX-latest-blue)
 
+## Support
+
+Love this project? Check out my books to explore more of AI and iOS development:
+- [Exploring AI for iOS Development](https://academy.rudrank.com/product/ai)
+- [Exploring AI-Assisted Coding for iOS Development](https://academy.rudrank.com/product/ai-assisted-coding)
+
+Your support helps to keep this project growing!
+
 ## Features
 
 - Tool use demonstrations using Llama 3.2 3B model
