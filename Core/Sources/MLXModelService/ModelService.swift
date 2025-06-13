@@ -24,7 +24,7 @@ public struct CoreModelService: Sendable {
 
     public func provideModelContainer() -> any CoreModelContainer {
         ConcreteModelContainer(
-            modelConfiguration: ModelRegistry.llama3_2_3B_4bit,
+            modelConfiguration: LLMRegistry.llama3_2_3B_4bit,
             generateParameters: GenerateParameters(temperature: 0.5)
         )
     }
