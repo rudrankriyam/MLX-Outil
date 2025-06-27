@@ -1,6 +1,6 @@
 # MLX Outil
 
-MLX Outil is a multiplatform Swift project to show tool usage with Qwen 3 1.5B and Llama 3 seris model using MLX Swift across iOS, macOS, and visionOS platforms.
+MLX Outil is a multiplatform Swift project to show tool usage with Qwen 3 1.7B model using MLX Swift across iOS, macOS, and visionOS platforms.
 
 The name **MLX Outil** is derived from the French word *outil*, which means "tool."
 
@@ -18,7 +18,7 @@ Your support helps to keep this project growing!
 
 ## Features
 
-- Tool use demonstrations using Llama 3.2 3B model
+- Tool use demonstrations using Qwen 3 1.7B model
 - Cross-platform support (iOS, macOS, visionOS)
 - On-device inference using MLX Swift
 - **MLXTools**: A modular Swift package providing system integration tools
