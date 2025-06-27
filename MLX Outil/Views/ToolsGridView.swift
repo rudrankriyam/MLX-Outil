@@ -51,13 +51,8 @@ struct ToolsGridView: View {
     }
     
     private var adaptiveColumns: [GridItem] {
-        #if os(iOS)
-        return [
-            GridItem(.flexible(minimum: 140), spacing: 12),
-            GridItem(.flexible(minimum: 140), spacing: 12)
-        ]
-        #elseif os(macOS)
-        return Array(repeating: GridItem(.adaptive(minimum: 280), spacing: 12), count: 1)
+        #if os(macOS)
+        return [GridItem(.adaptive(minimum: 280), spacing: 12)]
         #else
         return [
             GridItem(.flexible(minimum: 140), spacing: 12),

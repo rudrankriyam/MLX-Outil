@@ -8,7 +8,7 @@ struct MLXOutilApp: App {
         WindowGroup {
             MainTabView()
                 .environment(llmManager)
+                .frame(minWidth: 800, minHeight: 600)
         }
-        .defaultSize(width: 800, height: 600)
     }
 }

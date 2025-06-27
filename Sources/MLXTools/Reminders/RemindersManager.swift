@@ -101,7 +101,7 @@ public class RemindersManager {
         case "create":
             return try createReminder(input: input)
         case "query":
-            return try queryReminders(input: input)
+            return try await queryReminders(input: input)
         case "complete":
             return try completeReminder(reminderId: input.reminderId)
         case "update":
@@ -188,7 +188,7 @@ public class RemindersManager {
         }
     }
     
-    private func queryReminders(input: RemindersInput) throws -> RemindersOutput {
+    private func queryReminders(input: RemindersInput) async throws -> RemindersOutput {
         let calendars = eventStore.calendars(for: .reminder)
         var predicate: NSPredicate
         
@@ -209,18 +209,14 @@ public class RemindersManager {
             predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: nil, calendars: calendars)
         }
         
-        let semaphore = DispatchSemaphore(value: 0)
-        var reminders: [EKReminder] = []
-        
-        eventStore.fetchReminders(matching: predicate) { fetchedReminders in
-            reminders = fetchedReminders ?? []
-            semaphore.signal()
+        let fetchedReminders: [EKReminder] = await withCheckedContinuation { continuation in
+            eventStore.fetchReminders(matching: predicate) { fetchedReminders in
+                continuation.resume(returning: fetchedReminders ?? [])
+            }
         }
         
-        semaphore.wait()
-        
         // Sort reminders
-        reminders.sort { reminder1, reminder2 in
+        let reminders = fetchedReminders.sorted { reminder1, reminder2 in
             // First by completion status
             if reminder1.isCompleted != reminder2.isCompleted {
                 return !reminder1.isCompleted

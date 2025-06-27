@@ -57,19 +57,14 @@ struct ExamplesView: View {
     }
 
     private var adaptiveColumns: [GridItem] {
-#if os(iOS)
+        #if os(macOS)
+        return [GridItem(.adaptive(minimum: 280), spacing: 12)]
+        #else
         return [
             GridItem(.flexible(minimum: 140), spacing: 12),
-            GridItem(.flexible(minimum: 140), spacing: 12),
+            GridItem(.flexible(minimum: 140), spacing: 12)
         ]
-#elseif os(macOS)
-        return Array(repeating: GridItem(.adaptive(minimum: 280), spacing: 12), count: 1)
-#else
-        return [
-            GridItem(.flexible(minimum: 140), spacing: 12),
-            GridItem(.flexible(minimum: 140), spacing: 12),
-        ]
-#endif
+        #endif
     }
 
     private var outputView: some View {
