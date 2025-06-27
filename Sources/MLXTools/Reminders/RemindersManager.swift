@@ -189,21 +189,30 @@ public class RemindersManager {
     }
 
     private func queryReminders(input: RemindersInput) async throws -> RemindersOutput {
-        // Fetch and process reminders in EventKit callback
-        return try await withCheckedContinuation { continuation in
+        // Process reminders within EventKit callback to avoid crossing Sendable boundaries
+        return await withCheckedContinuation { continuation in
             let filter = input.filter?.lowercased() ?? "incomplete"
             let calendars = eventStore.calendars(for: .reminder)
             let predicate = createPredicate(for: filter, calendars: calendars)
 
-            eventStore.fetchReminders(matching: predicate) { results in
-                let sortedReminders = sortReminders(results)
-                let remindersDescription = formatReminders(sortedReminders, filter: filter)
-                continuation.resume(returning: RemindersOutput(
+            eventStore.fetchReminders(matching: predicate) { [weak self] reminders in
+                guard let self = self else {
+                    continuation.resume(returning: RemindersOutput(status: "error", message: "Manager deallocated"))
+                    return
+                }
+
+                let fetchedReminders = reminders ?? []
+                let sortedReminders = self.sortReminders(fetchedReminders)
+                let remindersDescription = self.formatReminders(sortedReminders, filter: filter)
+
+                let result = RemindersOutput(
                     status: "success",
                     message: "Found \(sortedReminders.count) reminder(s)",
                     reminders: remindersDescription,
                     count: sortedReminders.count
-                ))
+                )
+
+                continuation.resume(returning: result)
             }
         }
     }
