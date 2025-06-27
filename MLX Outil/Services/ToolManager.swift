@@ -18,7 +18,16 @@ class ToolManager {
     // MARK: - Tool Registry
     
     var allTools: [any ToolProtocol] {
-        let tools: [any ToolProtocol] = [weatherTool, workoutTool, searchTool]
+        let tools: [any ToolProtocol] = [
+            weatherTool, 
+            workoutTool, 
+            searchTool,
+            calendarTool,
+            remindersTool,
+            contactsTool,
+            locationTool,
+            musicTool
+        ]
         logger.info("ToolManager.allTools - Returning \(tools.count) tools:")
         for (index, tool) in tools.enumerated() {
             let schema = tool.schema
@@ -67,6 +76,36 @@ class ToolManager {
                 logger.debug("Executing search tool")
                 let result = try await toolCall.execute(with: searchTool)
                 logger.info("Search tool executed successfully")
+                return try result.toolResult
+                
+            case "manage_calendar":
+                logger.debug("Executing calendar tool")
+                let result = try await toolCall.execute(with: calendarTool)
+                logger.info("Calendar tool executed successfully")
+                return try result.toolResult
+                
+            case "manage_reminders":
+                logger.debug("Executing reminders tool")
+                let result = try await toolCall.execute(with: remindersTool)
+                logger.info("Reminders tool executed successfully")
+                return try result.toolResult
+                
+            case "manage_contacts":
+                logger.debug("Executing contacts tool")
+                let result = try await toolCall.execute(with: contactsTool)
+                logger.info("Contacts tool executed successfully")
+                return try result.toolResult
+                
+            case "access_location":
+                logger.debug("Executing location tool")
+                let result = try await toolCall.execute(with: locationTool)
+                logger.info("Location tool executed successfully")
+                return try result.toolResult
+                
+            case "access_music":
+                logger.debug("Executing music tool")
+                let result = try await toolCall.execute(with: musicTool)
+                logger.info("Music tool executed successfully")
                 return try result.toolResult
                 
             default:
