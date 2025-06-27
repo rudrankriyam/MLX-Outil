@@ -33,13 +33,27 @@ struct SearchView: View {
   private var outputView: some View {
     ScrollView(.vertical) {
       ScrollViewReader { sp in
-        Group {
+        VStack(alignment: .leading, spacing: 12) {
+          if evaluator.running {
+            HStack {
+              Spacer()
+              ProgressView()
+                .controlSize(.small)
+                .padding(.trailing)
+            }
+          }
+          
           Markdown(evaluator.output)
             .textSelection(.enabled)
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(secondaryBackground)
             .cornerRadius(12)
+            .markdownTextStyle(\.code) {
+              FontFamilyVariant(.monospaced)
+              BackgroundColor(Color.blue.opacity(0.1))
+              ForegroundColor(.blue)
+            }
         }
         .onChange(of: evaluator.output) { _, _ in
           sp.scrollTo("bottom")

@@ -1,4 +1,5 @@
 import HealthKit
+import MarkdownUI
 import SwiftUI
 
 struct WorkoutView: View {
@@ -15,13 +16,6 @@ struct WorkoutView: View {
     #endif
     private let accentColor = Color.accentColor
 
-    /// Style options for displaying the LLM output
-    private enum DisplayStyle: String, CaseIterable, Identifiable {
-        case plain, markdown
-        var id: Self { self }
-    }
-
-    @State private var selectedDisplayStyle = DisplayStyle.markdown
 
     var body: some View {
         NavigationStack {
@@ -42,13 +36,27 @@ struct WorkoutView: View {
     private var outputView: some View {
         ScrollView(.vertical) {
             ScrollViewReader { sp in
-                Group {
-                    Text(evaluator.output)
+                VStack(alignment: .leading, spacing: 12) {
+                    if evaluator.running {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .controlSize(.small)
+                                .padding(.trailing)
+                        }
+                    }
+                    
+                    Markdown(evaluator.output)
                         .textSelection(.enabled)
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(secondaryBackground)
                         .cornerRadius(12)
+                        .markdownTextStyle(\.code) {
+                            FontFamilyVariant(.monospaced)
+                            BackgroundColor(Color.blue.opacity(0.1))
+                            ForegroundColor(.blue)
+                        }
                 }
                 .onChange(of: evaluator.output) { _, _ in
                     sp.scrollTo("bottom")
@@ -102,14 +110,5 @@ struct WorkoutView: View {
         Task {
             await evaluator.generate(prompt: prompt)
         }
-    }
-
-    private func copyToClipboard(_ string: String) {
-        #if os(macOS)
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(string, forType: .string)
-        #else
-            UIPasteboard.general.string = string
-        #endif
     }
 }
