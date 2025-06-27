@@ -3,7 +3,6 @@ import SwiftUI
 
 struct SearchView: View {
   @Environment(LLMManager.self) private var evaluator
-  @StateObject private var loadingManager = LoadingManager.shared
   @State private var prompt = "Search web for iOS 18 mesh gradient"
 
   #if os(macOS)
@@ -17,15 +16,9 @@ struct SearchView: View {
 
   var body: some View {
     NavigationStack {
-      ZStack {
-        VStack(alignment: .leading, spacing: 16) {
-          outputView
-          promptInputView
-        }
-
-        if loadingManager.isLoading {
-          LoadingView()
-        }
+      VStack(alignment: .leading, spacing: 16) {
+        outputView
+        promptInputView
       }
       #if os(visionOS)
         .padding(40)

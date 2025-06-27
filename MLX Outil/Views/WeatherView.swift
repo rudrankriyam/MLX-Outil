@@ -2,107 +2,111 @@ import MarkdownUI
 import SwiftUI
 
 struct WeatherView: View {
-    @Environment(LLMManager.self) private var evaluator
-    @StateObject private var loadingManager = LoadingManager.shared
-    @State private var prompt =
-        "How's the weather today in Gurgaon and what should I wear?"
+  @Environment(LLMManager.self) private var evaluator
+  @State private var prompt =
+    "How's the weather today in New Delhi, Delhi and what should I wear?"
 
-    #if os(macOS)
-        private let backgroundColor = Color(NSColor.windowBackgroundColor)
-        private let secondaryBackground = Color(NSColor.controlBackgroundColor)
-    #else
-        private let backgroundColor = Color(.systemBackground)
-        private let secondaryBackground = Color(.secondarySystemBackground)
-    #endif
-    private let accentColor = Color.accentColor
+  #if os(macOS)
+    private let backgroundColor = Color(NSColor.windowBackgroundColor)
+    private let secondaryBackground = Color(NSColor.controlBackgroundColor)
+  #else
+    private let backgroundColor = Color(.systemBackground)
+    private let secondaryBackground = Color(.secondarySystemBackground)
+  #endif
+  private let accentColor = Color.accentColor
 
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                VStack(alignment: .leading, spacing: 16) {
-                    outputView
-                    promptInputView
-                }
-
-                if loadingManager.isLoading {
-                    LoadingView()
-                }
-            }
-            #if os(visionOS)
-                .padding(40)
-            #else
-                .padding()
-            #endif
-            .navigationTitle("Weather")
-            .background(backgroundColor)
-        }
+  var body: some View {
+    NavigationStack {
+      VStack(alignment: .leading, spacing: 16) {
+        outputView
+        promptInputView
+      }
+      #if os(visionOS)
+        .padding(40)
+      #else
+        .padding()
+      #endif
+      .navigationTitle("Weather")
+      .background(backgroundColor)
     }
+  }
 
-    private var outputView: some View {
-        ScrollView(.vertical) {
-            ScrollViewReader { sp in
-                Group {
-                    Markdown(evaluator.output)
-                        .textSelection(.enabled)
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(secondaryBackground)
-                        .cornerRadius(12)
-                }
-                .onChange(of: evaluator.output) { _, _ in
-                    sp.scrollTo("bottom")
-                }
+  private var outputView: some View {
+    ScrollView(.vertical) {
+      ScrollViewReader { sp in
+        VStack(alignment: .leading, spacing: 12) {
+          if evaluator.running {
+            HStack {
+              Spacer()
+              ProgressView()
+                .controlSize(.small)
+                .padding(.trailing)
+            }
+          }
 
-                Spacer()
-                    .frame(width: 1, height: 1)
-                    .id("bottom")
+          Markdown(evaluator.output)
+            .textSelection(.enabled)
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(secondaryBackground)
+            .cornerRadius(12)
+            .markdownTextStyle(\.code) {
+              FontFamilyVariant(.monospaced)
+              BackgroundColor(Color.blue.opacity(0.1))
+              ForegroundColor(.blue)
             }
         }
-        .background(backgroundColor)
-    }
-
-    private var promptInputView: some View {
-        HStack(spacing: 12) {
-            TextField(
-                "Ask about weather and clothing suggestions...",
-                text: $prompt,
-                axis: .vertical
-            )
-            .lineLimit(1...4)
-            .textFieldStyle(.plain)
-            .onSubmit(generate)
-            .disabled(evaluator.running)
-            #if os(visionOS)
-                .textFieldStyle(.roundedBorder)
-            #endif
-
-            Button(action: generate) {
-                Image(
-                    systemName: evaluator.running
-                        ? "stop.circle.fill" : "arrow.up.circle.fill"
-                )
-                .resizable()
-                .frame(width: 30, height: 30)
-                .foregroundColor(evaluator.running ? .red : accentColor)
-            }
-            .disabled(
-                prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            )
-            .animation(.easeInOut, value: evaluator.running)
+        .onChange(of: evaluator.output) { _, _ in
+          sp.scrollTo("bottom")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(secondaryBackground)
-        .cornerRadius(16)
-        .padding(.horizontal)
-    }
 
-    private func generate() {
-        Task {
-            loadingManager.startLoading(
-                message: "Checking weather conditions...")
-            await evaluator.generate(prompt: prompt)
-            loadingManager.stopLoading()
-        }
+        Spacer()
+          .frame(width: 1, height: 1)
+          .id("bottom")
+      }
     }
+    .background(backgroundColor)
+  }
+
+  private var promptInputView: some View {
+    HStack(spacing: 12) {
+      TextField(
+        "Ask about weather and clothing suggestions...",
+        text: $prompt,
+        axis: .vertical
+      )
+      .lineLimit(1...4)
+      .textFieldStyle(.plain)
+      .onSubmit(generate)
+      .disabled(evaluator.running)
+      #if os(visionOS)
+        .textFieldStyle(.roundedBorder)
+      #endif
+
+      Button(action: generate) {
+        Image(
+          systemName: evaluator.running
+            ? "stop.circle.fill" : "arrow.up.circle.fill"
+        )
+        .resizable()
+        .frame(width: 30, height: 30)
+        .foregroundColor(evaluator.running ? .red : accentColor)
+      }
+      .disabled(
+        prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      )
+      .animation(.easeInOut, value: evaluator.running)
+    }
+    .padding(.horizontal, 16)
+    .padding(.vertical, 12)
+    .background(secondaryBackground)
+    .cornerRadius(16)
+    .padding(.horizontal)
+  }
+
+  private func generate() {
+    Task {
+      await evaluator.generate(prompt: prompt)
+    }
+  }
 }
