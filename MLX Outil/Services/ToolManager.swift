@@ -1,6 +1,6 @@
 import Foundation
 import MLXLMCommon
-import HealthKit
+import MLXTools
 import Tokenizers
 import os
 
@@ -8,77 +8,11 @@ import os
 class ToolManager {
     static let shared = ToolManager()
     
-    private let healthManager = HealthKitManager.shared
-    private let weatherManager = WeatherKitManager.shared
-    private let searchManager = DuckDuckGoManager.shared
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "MLXOutil", category: "ToolManager")
     
     private init() {
         logger.info("ToolManager initialized")
-        // Force initialization of tools
-        _ = weatherTool
-        _ = workoutTool
-        _ = searchTool
         logger.info("All tools initialized")
-    }
-    
-    // MARK: - Tool Definitions
-    
-    // Weather Tool
-    struct WeatherInput: Codable, Sendable {
-        let location: String
-    }
-    
-    lazy var weatherTool = Tool<WeatherInput, WeatherData>(
-        name: "get_weather_data",
-        description: "Get current weather data for a specific location",
-        parameters: [
-            .required("location", type: .string, description: "The city and state, e.g. New Delhi, Delhi")
-        ]
-    ) { input in
-        let weatherService = WeatherKitManager.shared
-        let response = try await weatherService.fetchWeather(forCity: input.location)
-        return response
-    }
-    
-    // Workout Tool
-    struct EmptyInput: Codable, Sendable {}
-    
-    struct WorkoutOutput: Codable, Sendable {
-        let summary: String
-    }
-    
-    lazy var workoutTool = Tool<EmptyInput, WorkoutOutput>(
-        name: "get_workout_summary",
-        description: "Get a summary of workouts for this week",
-        parameters: []
-    ) { _ in
-        let workouts = try await HealthKitManager.shared.fetchWorkouts(for: .week(Date()))
-        if workouts.isEmpty {
-            return WorkoutOutput(summary: "No workouts found for this week.")
-        }
-        let summary = OutputFormatter.formatWeeklyWorkoutSummary(workouts, using: HealthKitManager.shared)
-        return WorkoutOutput(summary: summary)
-    }
-    
-    // Search Tool
-    struct SearchInput: Codable, Sendable {
-        let query: String
-    }
-    
-    struct SearchOutput: Codable, Sendable {
-        let results: String
-    }
-    
-    lazy var searchTool = Tool<SearchInput, SearchOutput>(
-        name: "search_duckduckgo",
-        description: "Search DuckDuckGo for information on a topic",
-        parameters: [
-            .required("query", type: .string, description: "The search query to look up")
-        ]
-    ) { input in
-        let results = try await DuckDuckGoManager.shared.search(query: input.query)
-        return SearchOutput(results: results)
     }
     
     // MARK: - Tool Registry
