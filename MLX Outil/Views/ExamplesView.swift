@@ -1,20 +1,20 @@
-import SwiftUI
 import MarkdownUI
+import SwiftUI
 
 struct ExamplesView: View {
     @Environment(LLMManager.self) private var llm
     @State private var selectedExample: ExampleType?
     @State private var isRunning = false
-    
-    #if os(macOS)
+
+#if os(macOS)
     private let backgroundColor = Color(NSColor.windowBackgroundColor)
     private let secondaryBackground = Color(NSColor.controlBackgroundColor)
-    #else
+#else
     private let backgroundColor = Color(.systemBackground)
     private let secondaryBackground = Color(.secondarySystemBackground)
-    #endif
+#endif
     private let accentColor = Color.accentColor
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -29,19 +29,19 @@ struct ExamplesView: View {
             .background(backgroundColor)
         }
     }
-    
+
     private var headerView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Try These Examples")
+            Text("MLX Outil")
                 .font(.title2)
                 .fontWeight(.bold)
-            
-            Text("Explore different combinations of tools working together")
+
+            Text("Explore different tools working together")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
     }
-    
+
     private var exampleButtonsView: some View {
         LazyVGrid(columns: adaptiveColumns, spacing: 16) {
             ForEach(ExampleType.allCases, id: \.self) { example in
@@ -55,23 +55,23 @@ struct ExamplesView: View {
             }
         }
     }
-    
+
     private var adaptiveColumns: [GridItem] {
-        #if os(iOS)
+#if os(iOS)
         return [
             GridItem(.flexible(minimum: 140), spacing: 12),
-            GridItem(.flexible(minimum: 140), spacing: 12)
+            GridItem(.flexible(minimum: 140), spacing: 12),
         ]
-        #elseif os(macOS)
+#elseif os(macOS)
         return Array(repeating: GridItem(.adaptive(minimum: 280), spacing: 12), count: 1)
-        #else
+#else
         return [
             GridItem(.flexible(minimum: 140), spacing: 12),
-            GridItem(.flexible(minimum: 140), spacing: 12)
+            GridItem(.flexible(minimum: 140), spacing: 12),
         ]
-        #endif
+#endif
     }
-    
+
     private var outputView: some View {
         Group {
             if llm.running || !llm.output.isEmpty {
@@ -85,7 +85,7 @@ struct ExamplesView: View {
                                 .scaleEffect(0.8)
                         }
                     }
-                    
+
                     ScrollView {
                         Markdown(llm.output)
                             .textSelection(.enabled)
@@ -104,11 +104,11 @@ struct ExamplesView: View {
             }
         }
     }
-    
+
     private func executeExample(_ example: ExampleType) {
         selectedExample = example
         isRunning = true
-        
+
         Task {
             await llm.generate(prompt: example.prompt)
             isRunning = false
@@ -123,15 +123,15 @@ struct ExampleButton: View {
     let isSelected: Bool
     let isRunning: Bool
     let action: () -> Void
-    
-    #if os(macOS)
+
+#if os(macOS)
     private let selectedColor = Color.accentColor.opacity(0.2)
     private let defaultColor = Color(NSColor.controlBackgroundColor)
-    #else
+#else
     private let selectedColor = Color.accentColor.opacity(0.2)
     private let defaultColor = Color(.secondarySystemBackground)
-    #endif
-    
+#endif
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
@@ -140,9 +140,9 @@ struct ExampleButton: View {
                         .font(.title2)
                         .foregroundStyle(isSelected ? .white : .accentColor)
                         .frame(width: 24, height: 24)
-                    
+
                     Spacer()
-                    
+
                     if isRunning {
                         ProgressView()
                             .scaleEffect(0.7)
@@ -152,7 +152,7 @@ struct ExampleButton: View {
                             .foregroundStyle(isSelected ? Color.white.opacity(0.7) : Color.secondary)
                     }
                 }
-                
+
                 VStack(alignment: .leading, spacing: 6) {
                     Text(example.title)
                         .font(.subheadline)
@@ -160,7 +160,7 @@ struct ExampleButton: View {
                         .foregroundStyle(isSelected ? .white : .primary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-                    
+
                     Text(example.subtitle)
                         .font(.caption)
                         .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
@@ -176,14 +176,14 @@ struct ExampleButton: View {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(isSelected ? selectedColor : defaultColor)
                         .opacity(0.8)
-                    
+
                     // Subtle gradient overlay
                     RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
                                     Color.white.opacity(isSelected ? 0.05 : 0.02),
-                                    Color.clear
+                                    Color.clear,
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -198,7 +198,7 @@ struct ExampleButton: View {
                             gradient: Gradient(colors: [
                                 Color.white.opacity(0.15),
                                 Color.white.opacity(0.05),
-                                Color.clear
+                                Color.clear,
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -226,7 +226,7 @@ enum ExampleType: String, CaseIterable {
     case productivityAssistant = "productivity_assistant"
     case eventPlanning = "event_planning"
     case researchAssistant = "research_assistant"
-    
+
     var title: String {
         switch self {
         case .dailyBrief:
@@ -243,7 +243,7 @@ enum ExampleType: String, CaseIterable {
             return "Research Assistant"
         }
     }
-    
+
     var subtitle: String {
         switch self {
         case .dailyBrief:
@@ -260,7 +260,7 @@ enum ExampleType: String, CaseIterable {
             return "Web search and organized notes"
         }
     }
-    
+
     var icon: String {
         switch self {
         case .dailyBrief:
@@ -277,21 +277,27 @@ enum ExampleType: String, CaseIterable {
             return "magnifyingglass.circle"
         }
     }
-    
+
     var prompt: String {
         switch self {
         case .dailyBrief:
-            return "Give me my daily brief: What's the weather today? What events do I have on my calendar? What reminders do I have?"
+            return
+            "Give me my daily brief: What's the weather today in New Delhi, Delhi? What events do I have on my calendar? What reminders do I have?"
         case .travelPlanning:
-            return "I'm planning to visit San Francisco next week. What's the weather forecast? Find the location of Golden Gate Bridge and calculate the distance from downtown. Also check my calendar for availability."
+            return
+            "I'm planning to visit San Francisco next week. What's the weather forecast? Find the location of Golden Gate Bridge and calculate the distance from downtown. Also check my calendar for availability."
         case .healthDashboard:
-            return "Show me my health dashboard: workout summary for this week, and any health-related reminders I have."
+            return
+            "Show me my health dashboard: workout summary for this week, and any health-related reminders I have."
         case .productivityAssistant:
-            return "Help me be productive: Show my incomplete reminders, today's calendar events, and suggest some focus music to play."
+            return
+            "Help me be productive: Show my incomplete reminders, today's calendar events, and suggest some focus music to play."
         case .eventPlanning:
-            return "I want to plan a team meeting next Tuesday at 2 PM. Check my calendar availability, find contacts named 'team', and suggest a good meeting location."
+            return
+            "I want to plan a team meeting next Tuesday at 2 PM. Check my calendar availability, find contacts named 'team', and suggest a good meeting location."
         case .researchAssistant:
-            return "Research Swift concurrency for me. Search for the latest information and create a reminder to review the findings later."
+            return
+            "Research Swift concurrency for me. Search for the latest information and create a reminder to review the findings later."
         }
     }
 }
