@@ -99,7 +99,7 @@ class LLMManager {
 
             let userInput = UserInput(
                 chat: messages,
-                tools: weatherTool.schema
+                tools: [weatherTool.schema]
             )
 
             do {
@@ -111,15 +111,12 @@ class LLMManager {
                 try await modelContainer.perform { (context: ModelContext) -> Void in
                     let lmInput = try await context.processor.prepare(input: userInput)
                     let stream = try MLXLMCommon.generate(
-                        input: lmInput, context: context)
+                        input: lmInput, parameters: .init(), context: context)
 
-                    for await batch in stream._throttle(
-                        for: Duration.seconds(0.25), reducing: Generation.collect)
-                    {
-                        let output = batch.compactMap { $0.chunk }.joined(separator: "")
-                        if !output.isEmpty {
-                            Task { @MainActor [output] in
-                                self.output += output
+                    for await batch in stream {
+                        if await !output.isEmpty {
+                            Task { @MainActor [batch] in
+                                self.output += batch.chunk ?? ""
                             }
                         }
                     }

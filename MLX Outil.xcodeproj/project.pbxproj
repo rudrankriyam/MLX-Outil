@@ -7,8 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A60ACE02E0E545F009DD9E6 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 0A60ACDF2E0E545F009DD9E6 /* MLXLLM */; };
+		0A60ACE22E0E545F009DD9E6 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 0A60ACE12E0E545F009DD9E6 /* MLXLMCommon */; };
 		8D758A852D5A57EF009AB6EC /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8D758A842D5A57EF009AB6EC /* MarkdownUI */; };
-		E56432262D5BDFF400180963 /* MLXModelService in Frameworks */ = {isa = PBXBuildFile; productRef = E56432252D5BDFF400180963 /* MLXModelService */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -24,7 +25,6 @@
 /* Begin PBXFileReference section */
 		0A33393C2D616E21003F96FF /* MLX OutilTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "MLX OutilTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0AC155662CFBB30E00FBDD8E /* MLX Outil.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MLX Outil.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		E56432232D5BAFE400180963 /* Core */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = Core; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,8 +52,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0A60ACE02E0E545F009DD9E6 /* MLXLLM in Frameworks */,
+				0A60ACE22E0E545F009DD9E6 /* MLXLMCommon in Frameworks */,
 				8D758A852D5A57EF009AB6EC /* MarkdownUI in Frameworks */,
-				E56432262D5BDFF400180963 /* MLXModelService in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,7 +67,6 @@
 				0AC155682CFBB30E00FBDD8E /* MLX Outil */,
 				0A33393D2D616E21003F96FF /* MLX OutilTests */,
 				0AC155672CFBB30E00FBDD8E /* Products */,
-				E56432232D5BAFE400180963 /* Core */,
 				E56432242D5BDFF400180963 /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -131,7 +131,8 @@
 			name = "MLX Outil";
 			packageProductDependencies = (
 				8D758A842D5A57EF009AB6EC /* MarkdownUI */,
-				E56432252D5BDFF400180963 /* MLXModelService */,
+				0A60ACDF2E0E545F009DD9E6 /* MLXLLM */,
+				0A60ACE12E0E545F009DD9E6 /* MLXLMCommon */,
 			);
 			productName = "MLX Outil";
 			productReference = 0AC155662CFBB30E00FBDD8E /* MLX Outil.app */;
@@ -167,6 +168,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				8D758A832D5A57EF009AB6EC /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0AC155672CFBB30E00FBDD8E /* Products */;
@@ -506,6 +508,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		8D758A832D5A57EF009AB6EC /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui.git";
@@ -517,14 +527,20 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0A60ACDF2E0E545F009DD9E6 /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLLM;
+		};
+		0A60ACE12E0E545F009DD9E6 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLMCommon;
+		};
 		8D758A842D5A57EF009AB6EC /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8D758A832D5A57EF009AB6EC /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
 			productName = MarkdownUI;
-		};
-		E56432252D5BDFF400180963 /* MLXModelService */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = MLXModelService;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
