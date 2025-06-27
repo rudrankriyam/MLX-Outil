@@ -5,6 +5,16 @@ struct MainTabView: View {
 
   var body: some View {
     TabView {
+      ExamplesView()
+        .tabItem {
+          Label("Examples", systemImage: "sparkles")
+        }
+
+      ToolsGridView()
+        .tabItem {
+          Label("Tools", systemImage: "wrench.and.screwdriver")
+        }
+
       WeatherView()
         .tabItem {
           Label("Weather", systemImage: "cloud.sun")
