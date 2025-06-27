@@ -9,5 +9,6 @@ struct MLXOutilApp: App {
             MainTabView()
                 .environment(llmManager)
         }
+        .defaultSize(width: 800, height: 600)
     }
 }

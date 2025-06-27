@@ -210,12 +210,47 @@ struct ToolButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity, minHeight: 140)
-            .background(isSelected ? selectedColor : defaultColor)
-            .cornerRadius(12)
+            .background(
+                ZStack {
+                    // Glass-like background
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(isSelected ? selectedColor : defaultColor)
+                        .opacity(0.8)
+                    
+                    // Subtle gradient overlay
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color.white.opacity(isSelected ? 0.05 : 0.02),
+                                    Color.clear
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+            )
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.white.opacity(0.15),
+                                Color.white.opacity(0.05),
+                                Color.clear
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
             )
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
         .disabled(isRunning)
