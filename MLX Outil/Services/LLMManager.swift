@@ -90,22 +90,30 @@ class LLMManager {
                 // generate and output
                 for await generation in stream {
                     if let chunk = generation.chunk {
-                        Task { @MainActor [chunk] in
+                        await Task { @MainActor [chunk] in
                             self.logger.debug("Adding output chunk: '\(chunk)'")
                             self.output += chunk
-                        }
+                        }.value
                     }
                     
                     if let info = generation.info {
-                        Task { @MainActor in
+                        await Task { @MainActor in
                             self.stat = "\(info.tokensPerSecond) tokens/s"
-                        }
+                        }.value
                     }
                     
                     if let toolCall = generation.toolCall {
                         await Task { @MainActor in
                             self.logger.info("Tool call detected: \(toolCall.function.name)")
                             self.logger.debug("Tool call arguments: \(toolCall.function.arguments)")
+                            
+                            // Save current output to history before tool call
+                            if !self.output.isEmpty {
+                                self.chatHistory.append(.assistant(self.output))
+                            }
+                            
+                            // Show tool call in output
+                            self.output += "\n\n🔧 **Calling tool:** `\(toolCall.function.name)`\n"
                         }.value
                         
                         // Handle the tool call
@@ -138,6 +146,11 @@ class LLMManager {
             let result = try await toolManager.execute(toolCall: toolCall)
             logger.info("Tool execution successful, result: \(result)")
             
+            // Show tool result in output
+            await Task { @MainActor in
+                self.output += "\n📊 **Tool result received**\n\n---\n\n"
+            }.value
+            
             // Continue conversation with tool result
             await performGeneration(prompt: prompt, toolResult: result, includingTools: false, isNewUserMessage: false)
         } catch {
@@ -156,5 +169,12 @@ class LLMManager {
             configuration: modelConfiguration) { _ in }
         
         return modelContainer
+    }
+    
+    // Clear conversation history
+    func clearHistory() {
+        chatHistory = [.system(Constants.systemPrompt)]
+        output = ""
+        logger.info("Conversation history cleared")
     }
 }
