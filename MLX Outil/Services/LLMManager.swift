@@ -1,6 +1,8 @@
 import HealthKit
-import MLXModelService
 import SwiftUI
+import MLXLMCommon
+import MLXLLM
+import MLX
 
 @MainActor
 @Observable
@@ -13,13 +15,9 @@ class LLMManager {
 
     var toolCallState: ToolCallParsingState = .idle
 
-    private let modelService: CoreModelContainer
     private let toolCallHandler: ToolCallHandler
 
     init() {
-        let modelService = CoreModelService()
-        self.modelService = modelService.provideModelContainer()
-
         self.toolCallHandler = ToolCallHandler(
             healthManager: HealthKitManager.shared,
             weatherManager: WeatherKitManager.shared
@@ -33,6 +31,8 @@ class LLMManager {
     private let weatherManager = WeatherKitManager.shared
 
     private var toolCallBuffer: String = ""
+
+    private let modelConfiguration = LLMRegistry.qwen3_1_7b_4bit
 
     static let availableTools: [[String: any Sendable]] = [
         [
@@ -92,40 +92,79 @@ class LLMManager {
         self.output = ""
 
         do {
-            let messages: OutilMessage = [
-                ["role": "system", "content": Constants.systemPrompt],
-                ["role": "user", "content": prompt],
+            let messages: [Chat.Message] = [
+                .system(Constants.systemPrompt),
+                .user(prompt)
             ]
 
-            let result = try await modelService.generate(
-                messages: messages,
-                tools: includingTools ? Self.availableTools : nil
-            ) { [weak self] text in
-                if includingTools {
-                    print("Text: \(text)")
-                } else {
-                    Task { @MainActor in
-                        self?.output = text
+            let userInput = UserInput(
+                chat: messages,
+                tools: weatherTool.schema
+            )
+
+            do {
+                let modelContainer = try await load()
+
+                // each time you generate you will get something new
+                MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
+
+                try await modelContainer.perform { (context: ModelContext) -> Void in
+                    let lmInput = try await context.processor.prepare(input: userInput)
+                    let stream = try MLXLMCommon.generate(
+                        input: lmInput, context: context)
+
+                    for await batch in stream._throttle(
+                        for: Duration.seconds(0.25), reducing: Generation.collect)
+                    {
+                        let output = batch.compactMap { $0.chunk }.joined(separator: "")
+                        if !output.isEmpty {
+                            Task { @MainActor [output] in
+                                self.output += output
+                            }
+                        }
                     }
                 }
+            } catch {
+                output = "Failed: \(error)"
             }
 
-            if includingTools {
-                let data = try await toolCallHandler.processLLMOutput(
-                    result.output)
-                await continueConversation(with: data, for: prompt)
-            }
-        } catch {
-            output = "Failed: \(error)"
+            running = false
         }
 
-        running = false
-    }
-
-    func continueConversation(with data: String, for context: String) async {
-        let followUpPrompt =
+        func continueConversation(with data: String, for context: String) async {
+            let followUpPrompt =
             "The \(context) data is: \(data). Now you are an expert. Please explain the data and provide recommendations based on this information."
-        running = false
-        await generate(prompt: followUpPrompt, includingTools: false)
+            running = false
+            await generate(prompt: followUpPrompt, includingTools: false)
+        }
+
+        func load() async throws -> ModelContainer {
+            let modelContainer = try await LLMModelFactory.shared.loadContainer(
+                configuration: modelConfiguration) { _ in }
+
+            return modelContainer
+        }
     }
+}
+
+public struct WeatherInput: Codable, Sendable {
+    let location: String
+}
+
+struct WeatherResponse: Codable, Sendable {
+    let content: String
+}
+
+public let weatherTool = Tool<WeatherInput, WeatherData>(
+    name: "get_weather_data",
+    description: "Gets weather data for a specified location",
+    parameters: [
+        .required(
+            "location", type: .string, description: "The city and state, e.g. New Delhi, Delhi"
+        ),
+    ]
+) { input in
+    let weatherService = WeatherKitManager()
+    let response = try await weatherService.fetchWeather(forCity: input.location)
+    return response
 }

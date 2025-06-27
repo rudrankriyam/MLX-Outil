@@ -19,6 +19,8 @@ public enum WeatherToolType: String, ToolCallTypeProtocol, Sendable {
     }
 }
 
+
+
 /// Arguments for weather tools
 public struct WeatherArguments: ArgumentProtocol {
     public typealias ToolType = WeatherToolType

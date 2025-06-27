@@ -7,7 +7,7 @@ enum ToolCallType: String, Codable {
     case searchDuckDuckGo = "search_duckduckgo"
 }
 
-struct ToolCall: Codable {
+struct OutilToolCall: Codable {
     let name: ToolCallType
     let arguments: ToolCallArguments
 }
@@ -121,7 +121,7 @@ class ToolCallHandler {
             throw ToolCallError.invalidJSON
         }
         
-        let toolCall = try decoder.decode(ToolCall.self, from: data)
+        let toolCall = try decoder.decode(OutilToolCall.self, from: data)
         logger.info("Successfully decoded tool call with name: \(toolCall.name.rawValue)")
         
         return try await processToolCallArgument(with: toolCall.name, argument: toolCall.arguments)

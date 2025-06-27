@@ -19,16 +19,16 @@ public protocol ArgumentProtocol: Codable, Sendable {
     var toolType: ToolType { get }
 }
 
-/// Generic tool call that can be used with any argument type
-public struct ToolCall<T: ArgumentProtocol>: Codable {
-    /// The name/type of the tool
-    public let name: T.ToolType
-    
-    /// The arguments for the tool
-    public let arguments: T
-    
-    public init(name: T.ToolType, arguments: T) {
-        self.name = name
-        self.arguments = arguments
-    }
-}
+///// Generic tool call that can be used with any argument type
+//public struct ToolCall<T: ArgumentProtocol>: Codable {
+//    /// The name/type of the tool
+//    public let name: T.ToolType
+//    
+//    /// The arguments for the tool
+//    public let arguments: T
+//    
+//    public init(name: T.ToolType, arguments: T) {
+//        self.name = name
+//        self.arguments = arguments
+//    }
+//}

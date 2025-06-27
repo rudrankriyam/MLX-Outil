@@ -8,10 +8,6 @@ let package = Package(
     platforms: [.iOS(.v17), .macOS(.v14), .visionOS(.v1)],
     products: [
         .library(
-            name: "MLXModelService",
-            targets: ["MLXModelService"]
-        ),
-        .library(
             name: "MLXArguments",
             targets: ["MLXArguments"]
         )
@@ -22,12 +18,6 @@ let package = Package(
             branch: "main")
     ],
     targets: [
-        .target(
-            name: "MLXModelService",
-            dependencies: [
-                .product(name: "MLXLLM", package: "mlx-swift-examples"),
-            ]
-        ),
         .target(
             name: "MLXArguments",
             dependencies: []

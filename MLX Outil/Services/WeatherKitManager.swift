@@ -8,6 +8,18 @@ public enum WeatherKitError: Error {
     case unauthorized
 }
 
+public struct WeatherData: Sendable, Codable {
+    let temperature: Double
+    let condition: String
+    let humidity: Double
+    let windSpeed: Double
+    let feelsLike: Double
+    let uvIndex: Int
+    let visibility: Double
+    let pressure: Double
+    let precipitationChance: Double
+}
+
 class WeatherKitManager {
     static let shared = WeatherKitManager()
 
@@ -17,17 +29,6 @@ class WeatherKitManager {
 
     init() {}
 
-    struct WeatherData {
-        let temperature: Double
-        let condition: String
-        let humidity: Double
-        let windSpeed: Double
-        let feelsLike: Double
-        let uvIndex: Int
-        let visibility: Double
-        let pressure: Double
-        let precipitationChance: Double
-    }
 
     // Add Logger enum
     private enum Logger {
@@ -197,8 +198,8 @@ class WeatherKitManager {
 }
 
 // Add CustomStringConvertible conformance to WeatherData for better logging
-extension WeatherKitManager.WeatherData: CustomStringConvertible {
-    var description: String {
+extension WeatherData: CustomStringConvertible {
+    public var description: String {
         return """
             Temperature: \(temperature)°C, 
             Feels Like: \(feelsLike)°C, 
