@@ -7,14 +7,14 @@ public typealias OutilMessage = [[String: String]]
 public protocol CoreModelContainer
 where Self: Sendable, Self: Observable {
     typealias ContainerResult = MLXLMCommon.GenerateResult
-    typealias Tool = [String: any Sendable]
+    typealias MLXTool = [String: any Sendable]
     typealias OnProgress = @Sendable (String) -> Void
 
     var onProgress: String { get }
 
     func generate(
         messages: [[String: String]],
-        tools: [Tool]?,
+        tools: [MLXTool]?,
         onProgress: @escaping OnProgress
     ) async throws -> ContainerResult
 }

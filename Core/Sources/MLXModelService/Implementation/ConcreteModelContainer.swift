@@ -20,7 +20,7 @@ final class ConcreteModelContainer: CoreModelContainer, @unchecked Sendable {
 
     func generate(
         messages: OutilMessage,
-        tools: [Tool]?,
+        tools: [MLXTool]?,
         onProgress: @escaping OnProgress
     ) async throws -> ContainerResult {
         let context = try await loadModel(configuration: modelConfiguration)
