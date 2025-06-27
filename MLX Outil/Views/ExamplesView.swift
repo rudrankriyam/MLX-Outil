@@ -251,7 +251,7 @@ enum ExampleType: String, CaseIterable {
         case .travelPlanning:
             return "Location, weather, and calendar"
         case .healthDashboard:
-            return "Workouts, health data, and goals"
+            return "Health reminders and wellness goals"
         case .productivityAssistant:
             return "Tasks, calendar, and focus music"
         case .eventPlanning:
@@ -288,7 +288,7 @@ enum ExampleType: String, CaseIterable {
             "I'm planning to visit San Francisco next week. What's the weather forecast? Find the location of Golden Gate Bridge and calculate the distance from downtown. Also check my calendar for availability."
         case .healthDashboard:
             return
-            "Show me my health dashboard: workout summary for this week, and any health-related reminders I have."
+            "Show me my health dashboard: any health-related reminders I have and suggestions for staying healthy."
         case .productivityAssistant:
             return
             "Help me be productive: Show my incomplete reminders, today's calendar events, and suggest some focus music to play."

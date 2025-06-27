@@ -404,9 +404,14 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "MLX Outil needs access to Apple Music to search and play music.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "MLX Outil needs access to your calendar to manage events.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "MLX Outil needs access to your contacts to search and manage contact information.";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "MLX Outil requires access to your health data.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MLX Outil requires access to your health data.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MLX Outil requires permission to update your health data.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "MLX Outil requires location to fetch weather data.";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "MLX Outil needs access to your reminders to manage tasks.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -422,7 +427,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.rudrankriyam.MLX-Outil";
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudrankriyam.mlxoutil;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -450,9 +455,14 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "MLX Outil needs access to Apple Music to search and play music.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "MLX Outil needs access to your calendar to manage events.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "MLX Outil needs access to your contacts to search and manage contact information.";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "MLX Outil requires access to your health data.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MLX Outil requires access to your health data.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MLX Outil requires permission to update your health data.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "MLX Outil requires location to fetch weather data.";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "MLX Outil needs access to your reminders to manage tasks.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -468,7 +478,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.rudrankriyam.MLX-Outil";
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudrankriyam.mlxoutil;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";

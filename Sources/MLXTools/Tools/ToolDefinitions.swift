@@ -59,12 +59,16 @@ public let workoutTool = Tool<EmptyInput, WorkoutOutput>(
     description: "Get a summary of workouts for this week",
     parameters: []
 ) { @MainActor _ in
+    #if os(iOS)
     let workouts = try await HealthKitManager.shared.fetchWorkouts(for: .week(Date()))
     if workouts.isEmpty {
         return WorkoutOutput(summary: "No workouts found for this week.")
     }
     let summary = OutputFormatter.formatWeeklyWorkoutSummary(workouts, using: HealthKitManager.shared)
     return WorkoutOutput(summary: summary)
+    #else
+    return WorkoutOutput(summary: "Workout tracking is only available on iOS devices. HealthKit is not fully supported on macOS.")
+    #endif
 }
 
 public let searchTool = Tool<SearchInput, SearchOutput>(
