@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import EventKit
+import EventKit
 import os
 
 /// Error types for reminders operations
@@ -189,26 +189,23 @@ public class RemindersManager {
     }
 
     private func queryReminders(input: RemindersInput) async throws -> RemindersOutput {
-        let calendars = eventStore.calendars(for: .reminder)
-        let filter = input.filter?.lowercased() ?? "incomplete"
-        let predicate = createPredicate(for: filter, calendars: calendars)
+        // Fetch and process reminders in EventKit callback
+        return try await withCheckedContinuation { continuation in
+            let filter = input.filter?.lowercased() ?? "incomplete"
+            let calendars = eventStore.calendars(for: .reminder)
+            let predicate = createPredicate(for: filter, calendars: calendars)
 
-        // Fetch reminders using continuation
-        let fetchedReminders: [EKReminder] = await withUnsafeContinuation { continuation in
-            eventStore.fetchReminders(matching: predicate) { reminders in
-                continuation.resume(returning: reminders ?? [])
+            eventStore.fetchReminders(matching: predicate) { results in
+                let sortedReminders = sortReminders(results)
+                let remindersDescription = formatReminders(sortedReminders, filter: filter)
+                continuation.resume(returning: RemindersOutput(
+                    status: "success",
+                    message: "Found \(sortedReminders.count) reminder(s)",
+                    reminders: remindersDescription,
+                    count: sortedReminders.count
+                ))
             }
         }
-
-        let sortedReminders = sortReminders(fetchedReminders)
-        let remindersDescription = formatReminders(sortedReminders, filter: filter)
-
-        return RemindersOutput(
-            status: "success",
-            message: "Found \(sortedReminders.count) reminder(s)",
-            reminders: remindersDescription,
-            count: sortedReminders.count
-        )
     }
 
     private func createPredicate(for filter: String, calendars: [EKCalendar]) -> NSPredicate {
@@ -254,7 +251,7 @@ public class RemindersManager {
         var remindersDescription = ""
 
         for (index, reminder) in reminders.enumerated() {
-            let completed = reminder.isCompleted ? "✓" : "○"
+            let completed = reminder.isCompleted ? "" : ""
             let priority = RemindersManager.getPriorityString(reminder.priority)
             let dueDate = RemindersManager.formatDateComponents(reminder.dueDateComponents)
             let list = reminder.calendar?.title ?? "Unknown List"
