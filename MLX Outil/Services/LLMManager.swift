@@ -28,8 +28,7 @@ class LLMManager {
     }
 
     private let modelConfiguration = LLMRegistry.qwen3_1_7b_4bit
-    private let generateParameters = GenerateParameters(maxTokens: 1000, temperature: 0.6)
-    private let updateInterval = Duration.seconds(0.25)
+    private let generateParameters = GenerateParameters(maxTokens: 4097, temperature: 0.6)
 
     var availableTools: [ToolSpec] {
         let schemas = toolManager.toolSchemas
