@@ -4,152 +4,152 @@ import MLXLMCommon
 import MLXLLM
 import MLX
 import Tokenizers
+import os
 
 @MainActor
 @Observable
 class LLMManager {
-
+    
     var running = false
     var output = ""
     var modelInfo = ""
     var stat = ""
-
-    private var toolCallProcessor = ToolCallProcessor()
-    private let toolManager = ToolManager.shared
     
-    init() {}
-
-    // Tool-specific properties
-    private var pendingToolCalls: [ToolCall] = []
-
-    private let modelConfiguration = LLMRegistry.qwen3_1_7b_4bit
-
-    var availableTools: [ToolSpec] {
-        toolManager.toolSchemas
+    // Conversation history
+    private var chatHistory: [Chat.Message] = [.system(Constants.systemPrompt)]
+    
+    private let toolManager = ToolManager.shared
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "MLXOutil", category: "LLMManager")
+    
+    init() {
+        logger.info("LLMManager initialized")
     }
-
+    
+    private let modelConfiguration = LLMRegistry.qwen3_1_7b_4bit
+    private let generateParameters = GenerateParameters(maxTokens: 500, temperature: 0.6)
+    private let updateInterval = Duration.seconds(0.25)
+    
+    var availableTools: [ToolSpec] {
+        let schemas = toolManager.toolSchemas
+        logger.debug("LLMManager availableTools called, returning \(schemas.count) schemas")
+        return schemas
+    }
+    
     func generate(prompt: String, includingTools: Bool = true) async {
-        guard !running else { return }
-
-        running = true
-        self.output = ""
-        self.pendingToolCalls = []
+        guard !running else { 
+            logger.warning("Generate called while already running")
+            return 
+        }
         
-        // Reset the tool call processor for new generation
-        let newProcessor = ToolCallProcessor()
-        self.toolCallProcessor = newProcessor
-
+        // Add user message to history
+        chatHistory.append(.user(prompt))
+        
+        await performGeneration(prompt: prompt, toolResult: nil, includingTools: includingTools, isNewUserMessage: true)
+    }
+    
+    private func performGeneration(prompt: String, toolResult: String?, includingTools: Bool, isNewUserMessage: Bool = false) async {
+        logger.info("Starting generation with prompt: \(prompt), toolResult: \(toolResult != nil ? "present" : "nil"), includingTools: \(includingTools)")
+        
+        running = true
+        
+        // Only clear output for new user messages
+        if isNewUserMessage {
+            self.output = ""
+        }
+        
         do {
-            let messages: [Chat.Message] = [
-                .system(Constants.systemPrompt),
-                .user(prompt)
-            ]
-
+            var messages = chatHistory
+            
+            if let toolResult = toolResult {
+                messages.append(.tool(toolResult))
+            }
+            
+            let tools = includingTools ? availableTools : []
+            logger.info("Available tools count: \(tools.count)")
+            for tool in tools {
+                logger.debug("Tool: \(tool)")
+            }
+            
             let userInput = UserInput(
                 chat: messages,
-                tools: includingTools ? availableTools : []
+                tools: tools
             )
-
-            do {
-                let modelContainer = try await load()
-
-                // each time you generate you will get something new
-                MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
-
-                try await modelContainer.perform { (context: ModelContext) -> Void in
-                    let lmInput = try await context.processor.prepare(input: userInput)
-                    let stream = try MLXLMCommon.generate(
-                        input: lmInput, parameters: .init(), context: context)
-
-                    for await batch in stream {
-                        if let chunk = batch.chunk {
-                            // Process chunk through ToolCallProcessor
-                            if let processedText = await toolCallProcessor.processChunk(chunk) {
-                                Task { @MainActor [processedText] in
-                                    self.output += processedText
-                                }
-                            }
-                            
-                            // Check if we have any tool calls to execute
-                            let currentToolCalls = await toolCallProcessor.toolCalls
-                            if !currentToolCalls.isEmpty {
-                                Task { @MainActor in
-                                    for toolCall in currentToolCalls {
-                                        if !self.pendingToolCalls.contains(toolCall) {
-                                            self.pendingToolCalls.append(toolCall)
-                                            
-                                            // Execute the tool call
-                                            do {
-                                                let result = try await self.toolManager.execute(toolCall: toolCall)
-                                                self.output += "\n\n<tool_result>\n" + result + "\n</tool_result>\n\n"
-                                                
-                                                // Continue conversation with tool result
-                                                await self.continueWithToolResult(result, for: toolCall.function.name)
-                                            } catch {
-                                                self.output += "\n\n<tool_error>\nError executing tool: \(error)\n</tool_error>\n\n"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch {
-                output = "Failed: \(error)"
-            }
-
-            running = false
-        }
-    }
-    
-    private func continueWithToolResult(_ result: String, for toolName: String) async {
-        let context = switch toolName {
-        case "get_weather_data": "weather"
-        case "get_workout_summary": "workout"
-        case "search_duckduckgo": "search"
-        default: "data"
-        }
-        
-        let followUpPrompt = "Based on the \(context) data above, please provide a helpful analysis and recommendations."
-        
-        // Create a new generation with the tool result in context
-        let messages: [Chat.Message] = [
-            .system(Constants.systemPrompt),
-            .assistant(output + "\n<tool_result>\n" + result + "\n</tool_result>"),
-            .user(followUpPrompt)
-        ]
-        
-        let userInput = UserInput(
-            chat: messages,
-            tools: [] // No tools for follow-up
-        )
-        
-        do {
-            let modelContainer = try await load()
             
+            logger.info("Loading model container")
+            let modelContainer = try await load()
+            logger.info("Model container loaded successfully")
+            
+            // each time you generate you will get something new
             MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
             
             try await modelContainer.perform { (context: ModelContext) -> Void in
                 let lmInput = try await context.processor.prepare(input: userInput)
                 let stream = try MLXLMCommon.generate(
-                    input: lmInput, parameters: .init(), context: context)
+                    input: lmInput, parameters: generateParameters, context: context)
                 
-                for await batch in stream {
-                    if let chunk = batch.chunk {
+                // generate and output
+                for await generation in stream {
+                    if let chunk = generation.chunk {
                         Task { @MainActor [chunk] in
+                            self.logger.debug("Adding output chunk: '\(chunk)'")
                             self.output += chunk
                         }
                     }
+                    
+                    if let info = generation.info {
+                        Task { @MainActor in
+                            self.stat = "\(info.tokensPerSecond) tokens/s"
+                        }
+                    }
+                    
+                    if let toolCall = generation.toolCall {
+                        await Task { @MainActor in
+                            self.logger.info("Tool call detected: \(toolCall.function.name)")
+                            self.logger.debug("Tool call arguments: \(toolCall.function.arguments)")
+                        }.value
+                        
+                        // Handle the tool call
+                        try await handleToolCall(toolCall, prompt: prompt)
+                        // Exit this generation as we'll start a new one with the tool result
+                        return
+                    }
                 }
+                
+                await Task { @MainActor in
+                    // Save assistant response to history
+                    self.chatHistory.append(.assistant(self.output))
+                    self.logger.info("Generation completed without tool calls")
+                    self.logger.info("Final output length: \(self.output.count)")
+                    self.logger.info("Chat history length: \(self.chatHistory.count)")
+                }.value
             }
         } catch {
-            Task { @MainActor in
-                self.output += "\n\nError in follow-up: \(error)\n"
-            }
+            logger.error("Generation failed: \(error)")
+            output = "Failed: \(error)"
+        }
+        
+        running = false
+    }
+    
+    private func handleToolCall(_ toolCall: ToolCall, prompt: String) async throws {
+        logger.info("Handling tool call: \(toolCall.function.name)")
+        
+        do {
+            let result = try await toolManager.execute(toolCall: toolCall)
+            logger.info("Tool execution successful, result: \(result)")
+            
+            // Continue conversation with tool result
+            await performGeneration(prompt: prompt, toolResult: result, includingTools: false, isNewUserMessage: false)
+        } catch {
+            logger.error("Tool execution failed: \(error)")
+            await performGeneration(
+                prompt: prompt, 
+                toolResult: "Tool execution failed: \(error.localizedDescription)", 
+                includingTools: false,
+                isNewUserMessage: false
+            )
         }
     }
-
     
     func load() async throws -> ModelContainer {
         let modelContainer = try await LLMModelFactory.shared.loadContainer(
@@ -158,4 +158,3 @@ class LLMManager {
         return modelContainer
     }
 }
-

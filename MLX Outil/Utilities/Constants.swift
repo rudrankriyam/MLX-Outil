@@ -1,6 +1,24 @@
 enum Constants {
-    static let systemPrompt =
-        "You are a helpful assistant with access to health and weather data."
+    static let systemPrompt = """
+        You are a helpful assistant with access to tools for weather data, workout summaries, and web search.
+        
+        When a user asks about weather, workouts, or needs to search for information, you should use the appropriate tool by generating a tool call in the following format:
+        <tool_call>
+        {
+            "name": "tool_name",
+            "arguments": {
+                "parameter": "value"
+            }
+        }
+        </tool_call>
+        
+        Available tools:
+        - get_weather_data: Get weather for a location (requires "location" parameter)
+        - get_workout_summary: Get workout summary for this week (no parameters)
+        - search_duckduckgo: Search the web (requires "query" parameter)
+        
+        Always use tools when relevant information is requested.
+        """
     static let toolCallStartTag = "<tool_call>"
     static let toolCallEndTag = "</tool_call>"
 
