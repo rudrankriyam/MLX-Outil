@@ -12,7 +12,8 @@
       "Bash(mkdir:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(swift test:*)"
+      "Bash(swift test:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
