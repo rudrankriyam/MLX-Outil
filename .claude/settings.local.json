@@ -5,7 +5,8 @@
       "Bash(xcode-select:*)",
       "Bash(sudo xcode-select:*)",
       "Bash(ls:*)",
-      "Bash(swift build:*)"
+      "Bash(swift build:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
