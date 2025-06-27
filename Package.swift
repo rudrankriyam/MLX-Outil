@@ -4,27 +4,23 @@
 import PackageDescription
 
 let package = Package(
-    name: "MLXTools",
-    platforms: [.macOS(.v14), .iOS(.v17)],
-    products: [
-        .library(
-            name: "MLXTools",
-            targets: ["MLXTools"]),
-    ],
-    dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift-examples", branch: "main"),
-    ],
-    targets: [
-        .target(
-            name: "MLXTools",
-            dependencies: [
-                .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
-            ],
-            path: "Sources/MLXTools",
-            swiftSettings: [
-                .swiftLanguageMode(.v6),
-                .enableExperimentalFeature("StrictConcurrency")
-            ]
-        ),
-    ]
+  name: "MLXTools",
+  platforms: [.macOS(.v14), .iOS(.v17)],
+  products: [
+    .library(
+      name: "MLXTools",
+      targets: ["MLXTools"])
+  ],
+  dependencies: [
+    .package(url: "https://github.com/ml-explore/mlx-swift-examples", branch: "main")
+  ],
+  targets: [
+    .target(
+      name: "MLXTools",
+      dependencies: [
+        .product(name: "MLXLMCommon", package: "mlx-swift-examples")
+      ],
+      path: "Sources/MLXTools"
+    )
+  ]
 )

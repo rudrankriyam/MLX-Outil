@@ -1,5 +1,5 @@
 import Foundation
-import EventKit
+@preconcurrency import EventKit
 import os
 
 /// Error types for reminders operations
@@ -9,7 +9,7 @@ public enum RemindersError: Error, LocalizedError {
     case missingTitle
     case missingReminderId
     case reminderNotFound
-    
+
     public var errorDescription: String? {
         switch self {
         case .accessDenied:
@@ -36,7 +36,7 @@ public struct RemindersInput: Codable, Sendable {
     public let listName: String?
     public let reminderId: String?
     public let filter: String?
-    
+
     public init(
         action: String,
         title: String? = nil,
@@ -65,7 +65,7 @@ public struct RemindersOutput: Codable, Sendable {
     public let reminderId: String?
     public let reminders: String?
     public let count: Int?
-    
+
     public init(status: String, message: String, reminderId: String? = nil, reminders: String? = nil, count: Int? = nil) {
         self.status = status
         self.message = message
@@ -79,24 +79,24 @@ public struct RemindersOutput: Codable, Sendable {
 @MainActor
 public class RemindersManager {
     public static let shared = RemindersManager()
-    
+
     private let eventStore = EKEventStore()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "MLXTools", category: "RemindersManager")
-    
+
     private init() {
         logger.info("RemindersManager initialized")
     }
-    
+
     /// Main entry point for reminders operations
     public func performAction(_ input: RemindersInput) async throws -> RemindersOutput {
         logger.info("Performing reminders action: \(input.action)")
-        
+
         // Request access if needed
         let authorized = await requestAccess()
         guard authorized else {
             throw RemindersError.accessDenied
         }
-        
+
         switch input.action.lowercased() {
         case "create":
             return try createReminder(input: input)
@@ -112,7 +112,7 @@ public class RemindersManager {
             throw RemindersError.invalidAction
         }
     }
-    
+
     private nonisolated func requestAccess() async -> Bool {
         let store = EKEventStore()
         do {
@@ -125,19 +125,19 @@ public class RemindersManager {
             return false
         }
     }
-    
+
     private func createReminder(input: RemindersInput) throws -> RemindersOutput {
         guard let title = input.title, !title.isEmpty else {
             throw RemindersError.missingTitle
         }
-        
+
         let reminder = EKReminder(eventStore: eventStore)
         reminder.title = title
-        
+
         if let notes = input.notes {
             reminder.notes = notes
         }
-        
+
         if let dueDateString = input.dueDate,
            let dueDate = parseDate(dueDateString) {
             reminder.dueDateComponents = Calendar.current.dateComponents(
@@ -145,7 +145,7 @@ public class RemindersManager {
                 from: dueDate
             )
         }
-        
+
         // Set priority
         if let priorityString = input.priority {
             switch priorityString.lowercased() {
@@ -159,7 +159,7 @@ public class RemindersManager {
                 reminder.priority = 0 // none
             }
         }
-        
+
         // Set calendar (list)
         if let listName = input.listName {
             let calendars = eventStore.calendars(for: .reminder)
@@ -171,12 +171,12 @@ public class RemindersManager {
         } else {
             reminder.calendar = eventStore.defaultCalendarForNewReminders()
         }
-        
+
         do {
             try eventStore.save(reminder, commit: true)
-            
+
             logger.info("Reminder created successfully: \(reminder.calendarItemIdentifier)")
-            
+
             return RemindersOutput(
                 status: "success",
                 message: "Reminder created successfully",
@@ -187,63 +187,78 @@ public class RemindersManager {
             throw error
         }
     }
-    
+
     private func queryReminders(input: RemindersInput) async throws -> RemindersOutput {
         let calendars = eventStore.calendars(for: .reminder)
-        var predicate: NSPredicate
-        
         let filter = input.filter?.lowercased() ?? "incomplete"
-        
+        let predicate = createPredicate(for: filter, calendars: calendars)
+
+        // Fetch reminders using continuation
+        let fetchedReminders: [EKReminder] = await withUnsafeContinuation { continuation in
+            eventStore.fetchReminders(matching: predicate) { reminders in
+                continuation.resume(returning: reminders ?? [])
+            }
+        }
+
+        let sortedReminders = sortReminders(fetchedReminders)
+        let remindersDescription = formatReminders(sortedReminders, filter: filter)
+
+        return RemindersOutput(
+            status: "success",
+            message: "Found \(sortedReminders.count) reminder(s)",
+            reminders: remindersDescription,
+            count: sortedReminders.count
+        )
+    }
+
+    private func createPredicate(for filter: String, calendars: [EKCalendar]) -> NSPredicate {
         switch filter {
         case "all":
-            predicate = eventStore.predicateForReminders(in: calendars)
+            return eventStore.predicateForReminders(in: calendars)
         case "completed":
-            predicate = eventStore.predicateForCompletedReminders(withCompletionDateStarting: nil, ending: nil, calendars: calendars)
+            return eventStore.predicateForCompletedReminders(withCompletionDateStarting: nil, ending: nil, calendars: calendars)
         case "today":
             let startOfDay = Calendar.current.startOfDay(for: Date())
             let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-            predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: startOfDay, ending: endOfDay, calendars: calendars)
+            return eventStore.predicateForIncompleteReminders(withDueDateStarting: startOfDay, ending: endOfDay, calendars: calendars)
         case "overdue":
-            predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: Date(), calendars: calendars)
+            return eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: Date(), calendars: calendars)
         default: // "incomplete"
-            predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: nil, calendars: calendars)
+            return eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: nil, calendars: calendars)
         }
-        
-        let fetchedReminders: [EKReminder] = await withCheckedContinuation { continuation in
-            eventStore.fetchReminders(matching: predicate) { fetchedReminders in
-                continuation.resume(returning: fetchedReminders ?? [])
-            }
-        }
-        
-        // Sort reminders
-        let reminders = fetchedReminders.sorted { reminder1, reminder2 in
+    }
+
+    private func sortReminders(_ reminders: [EKReminder]) -> [EKReminder] {
+        return reminders.sorted { reminder1, reminder2 in
             // First by completion status
             if reminder1.isCompleted != reminder2.isCompleted {
                 return !reminder1.isCompleted
             }
-            
+
             // Then by due date
             if let date1 = reminder1.dueDateComponents?.date,
                let date2 = reminder2.dueDateComponents?.date {
                 return date1 < date2
             }
-            
+
             // Reminders with due dates come before those without
             if reminder1.dueDateComponents != nil && reminder2.dueDateComponents == nil {
                 return true
             }
-            
+
             return false
         }
-        
+    }
+
+    private func formatReminders(_ reminders: [EKReminder], filter: String) -> String {
         var remindersDescription = ""
-        
+
         for (index, reminder) in reminders.enumerated() {
             let completed = reminder.isCompleted ? "✓" : "○"
-            let priority = getPriorityString(reminder.priority)
-            let dueDate = formatDateComponents(reminder.dueDateComponents)
+            let priority = RemindersManager.getPriorityString(reminder.priority)
+            let dueDate = RemindersManager.formatDateComponents(reminder.dueDateComponents)
             let list = reminder.calendar?.title ?? "Unknown List"
-            
+
             remindersDescription += "\(index + 1). \(completed) \(reminder.title ?? "Untitled")\n"
             remindersDescription += "   List: \(list)\n"
             if !dueDate.isEmpty {
@@ -257,34 +272,54 @@ public class RemindersManager {
             }
             remindersDescription += "\n"
         }
-        
+
         if remindersDescription.isEmpty {
             remindersDescription = "No reminders found with filter '\(filter)'"
         }
-        
-        return RemindersOutput(
-            status: "success",
-            message: "Found \(reminders.count) reminder(s)",
-            reminders: remindersDescription.trimmingCharacters(in: .whitespacesAndNewlines),
-            count: reminders.count
-        )
+
+        return remindersDescription.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
+
+    private nonisolated static func getPriorityString(_ priority: Int) -> String {
+        switch priority {
+        case 1...3:
+            return "High"
+        case 4...6:
+            return "Medium"
+        case 7...9:
+            return "Low"
+        default:
+            return "None"
+        }
+    }
+
+    private nonisolated static func formatDateComponents(_ components: DateComponents?) -> String {
+        guard let components = components,
+              let date = Calendar.current.date(from: components) else {
+            return ""
+        }
+
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
     private func completeReminder(reminderId: String?) throws -> RemindersOutput {
         guard let id = reminderId else {
             throw RemindersError.missingReminderId
         }
-        
+
         guard let reminder = eventStore.calendarItem(withIdentifier: id) as? EKReminder else {
             throw RemindersError.reminderNotFound
         }
-        
+
         reminder.isCompleted = true
         reminder.completionDate = Date()
-        
+
         do {
             try eventStore.save(reminder, commit: true)
-            
+
             return RemindersOutput(
                 status: "success",
                 message: "Reminder completed successfully",
@@ -295,25 +330,25 @@ public class RemindersManager {
             throw error
         }
     }
-    
+
     private func updateReminder(input: RemindersInput) throws -> RemindersOutput {
         guard let reminderId = input.reminderId else {
             throw RemindersError.missingReminderId
         }
-        
+
         guard let reminder = eventStore.calendarItem(withIdentifier: reminderId) as? EKReminder else {
             throw RemindersError.reminderNotFound
         }
-        
+
         // Update fields if provided
         if let title = input.title {
             reminder.title = title
         }
-        
+
         if let notes = input.notes {
             reminder.notes = notes
         }
-        
+
         if let dueDateString = input.dueDate {
             if let dueDate = parseDate(dueDateString) {
                 reminder.dueDateComponents = Calendar.current.dateComponents(
@@ -324,7 +359,7 @@ public class RemindersManager {
                 reminder.dueDateComponents = nil
             }
         }
-        
+
         if let priorityString = input.priority {
             switch priorityString.lowercased() {
             case "high":
@@ -337,10 +372,10 @@ public class RemindersManager {
                 reminder.priority = 0
             }
         }
-        
+
         do {
             try eventStore.save(reminder, commit: true)
-            
+
             return RemindersOutput(
                 status: "success",
                 message: "Reminder updated successfully",
@@ -351,21 +386,21 @@ public class RemindersManager {
             throw error
         }
     }
-    
+
     private func deleteReminder(reminderId: String?) throws -> RemindersOutput {
         guard let id = reminderId else {
             throw RemindersError.missingReminderId
         }
-        
+
         guard let reminder = eventStore.calendarItem(withIdentifier: id) as? EKReminder else {
             throw RemindersError.reminderNotFound
         }
-        
+
         let title = reminder.title ?? "Untitled"
-        
+
         do {
             try eventStore.remove(reminder, commit: true)
-            
+
             return RemindersOutput(
                 status: "success",
                 message: "Reminder '\(title)' deleted successfully"
@@ -375,36 +410,11 @@ public class RemindersManager {
             throw error
         }
     }
-    
+
     private func parseDate(_ dateString: String) -> Date? {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         formatter.timeZone = TimeZone.current
         return formatter.date(from: dateString)
-    }
-    
-    private func formatDateComponents(_ components: DateComponents?) -> String {
-        guard let components = components,
-              let date = Calendar.current.date(from: components) else {
-            return ""
-        }
-        
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
-    }
-    
-    private func getPriorityString(_ priority: Int) -> String {
-        switch priority {
-        case 1...3:
-            return "High"
-        case 4...6:
-            return "Medium"
-        case 7...9:
-            return "Low"
-        default:
-            return "None"
-        }
     }
 }
