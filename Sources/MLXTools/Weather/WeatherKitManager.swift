@@ -8,7 +8,7 @@ public enum WeatherKitError: Error {
     case unauthorized
 }
 
-public struct WeatherData: Sendable, Codable {
+public struct WeatherData: Sendable, Codable, Equatable {
     public let temperature: Double
     public let condition: String
     public let humidity: Double
@@ -20,6 +20,7 @@ public struct WeatherData: Sendable, Codable {
     public let precipitationChance: Double
 }
 
+@MainActor
 public class WeatherKitManager {
     public static let shared = WeatherKitManager()
 
