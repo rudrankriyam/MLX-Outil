@@ -2,7 +2,7 @@ import Foundation
 import HealthKit
 
 final class OutputFormatter {
-    static func formatWeatherData(_ weather: WeatherKitManager.WeatherData)
+    static func formatWeatherData(_ weather: WeatherData)
         -> String
     {
         String(
