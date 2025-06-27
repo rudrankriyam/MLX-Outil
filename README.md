@@ -21,6 +21,7 @@ Your support helps to keep this project growing!
 - Tool use demonstrations using Llama 3.2 3B model
 - Cross-platform support (iOS, macOS, visionOS)
 - On-device inference using MLX Swift
+- **MLXTools**: A modular Swift package providing system integration tools
 - Example tools implementation:
   - Weather information (You will have to provide your own bundle identifier which has WeatherKit checked)
   - Workout summary data
@@ -49,6 +50,19 @@ cd mlx-outil
    - HealthKit (for workout tracking features)
 
 4. Build and run the project
+
+## Project Structure
+
+### MLXTools Package
+
+The project includes a modular Swift package called `MLXTools` that provides:
+
+- **WeatherKitManager**: Weather data integration with OpenMeteo fallback
+- **HealthKitManager**: Access to workout and health data
+- **DuckDuckGoManager**: Web search functionality
+- **Tool Definitions**: Pre-configured MLXLMCommon tool definitions for LLM integration
+
+The package is designed to be reusable and follows MLX naming conventions, making it easy to share with the open-source community.
 
 ## Usage
 

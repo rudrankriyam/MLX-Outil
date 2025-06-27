@@ -1,23 +1,24 @@
 import Foundation
 import HealthKit
 
-class HealthKitManager {
-    static let shared = HealthKitManager()
+@MainActor
+public class HealthKitManager {
+    public static let shared = HealthKitManager()
     private let healthStore = HKHealthStore()
 
-    init() {}
+    public init() {}
 
-    enum HealthKitError: Error {
+    public enum HealthKitError: Error {
         case unavailable
         case unauthorized
         case invalidDate
     }
 
-    enum WorkoutDateRange {
+    public enum WorkoutDateRange {
         case day(Date)
         case week(Date)
 
-        var dateInterval: (start: Date, end: Date) {
+        public var dateInterval: (start: Date, end: Date) {
             let calendar = Calendar.current
             switch self {
             case .day(let date):
@@ -36,7 +37,7 @@ class HealthKitManager {
         }
     }
 
-    func requestAuthorization() async throws {
+    public func requestAuthorization() async throws {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw HealthKitError.unavailable
         }
@@ -51,7 +52,7 @@ class HealthKitManager {
         }
     }
 
-    func fetchWorkouts(for dateRange: WorkoutDateRange) async throws
+    public func fetchWorkouts(for dateRange: WorkoutDateRange) async throws
         -> [HKWorkout]
     {
         try await requestAuthorization()
@@ -83,7 +84,7 @@ class HealthKitManager {
         }
     }
 
-    func getWorkoutMetrics(_ workout: HKWorkout) -> WorkoutMetrics {
+    public func getWorkoutMetrics(_ workout: HKWorkout) -> WorkoutMetrics {
         let activeEnergyBurnedType = HKQuantityType(.activeEnergyBurned)
         let calories: Double
         if let statistics = workout.statistics(for: activeEnergyBurnedType),
@@ -103,9 +104,15 @@ class HealthKitManager {
         )
     }
 
-    struct WorkoutMetrics {
-        let duration: TimeInterval
-        let calories: Double
-        let distance: Double
+    public struct WorkoutMetrics {
+        public let duration: TimeInterval
+        public let calories: Double
+        public let distance: Double
+        
+        public init(duration: TimeInterval, calories: Double, distance: Double) {
+            self.duration = duration
+            self.calories = calories
+            self.distance = distance
+        }
     }
 }

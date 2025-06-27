@@ -1,4 +1,5 @@
 import HealthKit
+import MLXTools
 import MLX
 import MLXLLM
 import MLXLMCommon

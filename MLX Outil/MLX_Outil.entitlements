@@ -6,5 +6,19 @@
 	<true/>
 	<key>com.apple.developer.weatherkit</key>
 	<true/>
+	<key>com.apple.security.personal-information.calendars</key>
+	<true/>
+	<key>NSCalendarsUsageDescription</key>
+	<string>This app needs access to your calendar to manage events.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>This app needs access to your reminders to manage tasks.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This app needs access to your contacts to search and manage contact information.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to provide location-based services.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs access to your location to provide location-based services.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app needs access to Apple Music to search and play music.</string>
 </dict>
 </plist>

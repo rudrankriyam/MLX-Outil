@@ -1,8 +1,9 @@
 import Foundation
 import HealthKit
 
-final class OutputFormatter {
-    static func formatWeatherData(_ weather: WeatherData)
+@MainActor
+public final class OutputFormatter {
+    public static func formatWeatherData(_ weather: WeatherData)
         -> String
     {
         String(
@@ -18,19 +19,19 @@ final class OutputFormatter {
             weather.precipitationChance * 100)
     }
 
-    static func formatDuration(_ duration: TimeInterval) -> String {
+    public static func formatDuration(_ duration: TimeInterval) -> String {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.hour, .minute]
         formatter.unitsStyle = .abbreviated
         return formatter.string(from: duration) ?? "N/A"
     }
 
-    static func formatDistance(_ distance: Double) -> String {
+    public static func formatDistance(_ distance: Double) -> String {
         let kilometers = distance / 1000
         return String(format: "%.2f km", kilometers)
     }
 
-    static func formatWeeklyWorkoutSummary(
+    public static func formatWeeklyWorkoutSummary(
         _ workouts: [HKWorkout], using healthManager: HealthKitManager
     ) -> String {
         let dateFormatter = DateFormatter()

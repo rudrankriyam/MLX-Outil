@@ -8,26 +8,27 @@ public enum WeatherKitError: Error {
     case unauthorized
 }
 
-public struct WeatherData: Sendable, Codable {
-    let temperature: Double
-    let condition: String
-    let humidity: Double
-    let windSpeed: Double
-    let feelsLike: Double
-    let uvIndex: Int
-    let visibility: Double
-    let pressure: Double
-    let precipitationChance: Double
+public struct WeatherData: Sendable, Codable, Equatable {
+    public let temperature: Double
+    public let condition: String
+    public let humidity: Double
+    public let windSpeed: Double
+    public let feelsLike: Double
+    public let uvIndex: Int
+    public let visibility: Double
+    public let pressure: Double
+    public let precipitationChance: Double
 }
 
-class WeatherKitManager {
-    static let shared = WeatherKitManager()
+@MainActor
+public class WeatherKitManager {
+    public static let shared = WeatherKitManager()
 
     // WeatherService instance for fetching weather data
     private let weatherService = WeatherService()
     private let locationManager = CLLocationManager()
 
-    init() {}
+    public init() {}
 
 
     // Add Logger enum
@@ -40,7 +41,7 @@ class WeatherKitManager {
     }
 
     // Fetch weather for a specific city
-    func fetchWeather(forCity city: String) async throws -> WeatherData {
+    public func fetchWeather(forCity city: String) async throws -> WeatherData {
         Logger.log("Starting weather fetch for city: \(city)")
 
         do {
@@ -79,7 +80,7 @@ class WeatherKitManager {
     }
 
     // Fetch weather for current location
-    func fetchWeatherForCurrentLocation() async throws -> WeatherData {
+    public func fetchWeatherForCurrentLocation() async throws -> WeatherData {
         Logger.log("Attempting to fetch weather for current location")
 
         guard let location = locationManager.location else {
@@ -188,7 +189,7 @@ class WeatherKitManager {
     }
 
     // Setup location manager
-    func requestLocationAuthorization() {
+    public func requestLocationAuthorization() {
         Logger.log("Requesting location authorization")
         locationManager.requestWhenInUseAuthorization()
         Logger.log(

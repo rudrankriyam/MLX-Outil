@@ -7,7 +7,13 @@
       "Bash(ls:*)",
       "Bash(swift build:*)",
       "Bash(rm:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(git checkout:*)",
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(swift test:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
