@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A60ACE02E0E545F009DD9E6 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 0A60ACDF2E0E545F009DD9E6 /* MLXLLM */; };
 		0A60ACE22E0E545F009DD9E6 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 0A60ACE12E0E545F009DD9E6 /* MLXLMCommon */; };
+		0A60ACF22E0E6C93009DD9E6 /* MLXTools in Frameworks */ = {isa = PBXBuildFile; productRef = 0A60ACF12E0E6C93009DD9E6 /* MLXTools */; };
 		8D758A852D5A57EF009AB6EC /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8D758A842D5A57EF009AB6EC /* MarkdownUI */; };
 /* End PBXBuildFile section */
 
@@ -54,6 +55,7 @@
 			files = (
 				0A60ACE02E0E545F009DD9E6 /* MLXLLM in Frameworks */,
 				0A60ACE22E0E545F009DD9E6 /* MLXLMCommon in Frameworks */,
+				0A60ACF22E0E6C93009DD9E6 /* MLXTools in Frameworks */,
 				8D758A852D5A57EF009AB6EC /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -133,6 +135,7 @@
 				8D758A842D5A57EF009AB6EC /* MarkdownUI */,
 				0A60ACDF2E0E545F009DD9E6 /* MLXLLM */,
 				0A60ACE12E0E545F009DD9E6 /* MLXLMCommon */,
+				0A60ACF12E0E6C93009DD9E6 /* MLXTools */,
 			);
 			productName = "MLX Outil";
 			productReference = 0AC155662CFBB30E00FBDD8E /* MLX Outil.app */;
@@ -169,6 +172,7 @@
 			packageReferences = (
 				8D758A832D5A57EF009AB6EC /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
+				0A60ACF02E0E6C93009DD9E6 /* XCLocalSwiftPackageReference "../MLX-Outil" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0AC155672CFBB30E00FBDD8E /* Products */;
@@ -507,6 +511,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		0A60ACF02E0E6C93009DD9E6 /* XCLocalSwiftPackageReference "../MLX-Outil" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../MLX-Outil";
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -536,6 +547,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
 			productName = MLXLMCommon;
+		};
+		0A60ACF12E0E6C93009DD9E6 /* MLXTools */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MLXTools;
 		};
 		8D758A842D5A57EF009AB6EC /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;

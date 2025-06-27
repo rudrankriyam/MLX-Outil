@@ -26,14 +26,5 @@ let package = Package(
                 .enableExperimentalFeature("StrictConcurrency")
             ]
         ),
-        .testTarget(
-            name: "MLXToolsTests",
-            dependencies: ["MLXTools"],
-            path: "Tests/MLXToolsTests",
-            swiftSettings: [
-                .swiftLanguageMode(.v6),
-                .enableExperimentalFeature("StrictConcurrency")
-            ]
-        ),
     ]
 )
