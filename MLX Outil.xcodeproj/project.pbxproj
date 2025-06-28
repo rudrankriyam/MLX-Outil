@@ -172,7 +172,7 @@
 			packageReferences = (
 				8D758A832D5A57EF009AB6EC /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
-				0A60ACF02E0E6C93009DD9E6 /* XCLocalSwiftPackageReference "../MLX-Outil" */,
+				0A60ACF02E0E6C93009DD9E6 /* XCRemoteSwiftPackageReference "MLX-Outil" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0AC155672CFBB30E00FBDD8E /* Products */;
@@ -521,17 +521,18 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		0A60ACF02E0E6C93009DD9E6 /* XCLocalSwiftPackageReference "../MLX-Outil" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../MLX-Outil";
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCRemoteSwiftPackageReference section */
 		0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		0A60ACF02E0E6C93009DD9E6 /* XCRemoteSwiftPackageReference "MLX-Outil" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rudrankriyam/MLX-Outil.git";
 			requirement = {
 				branch = main;
 				kind = branch;
@@ -560,6 +561,7 @@
 		};
 		0A60ACF12E0E6C93009DD9E6 /* MLXTools */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 0A60ACF02E0E6C93009DD9E6 /* XCRemoteSwiftPackageReference "MLX-Outil" */;
 			productName = MLXTools;
 		};
 		8D758A842D5A57EF009AB6EC /* MarkdownUI */ = {

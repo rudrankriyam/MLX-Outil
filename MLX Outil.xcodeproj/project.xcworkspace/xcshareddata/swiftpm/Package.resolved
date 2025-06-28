@@ -1,5 +1,5 @@
 {
-  "originHash" : "1fe762115e22548345ca3a60a5669a27c7b78bfcb860287d81fd6a7f79713b88",
+  "originHash" : "01348b48308373a20570336928e3a3fd8a2febf9983e3e23e7191f2b848bcf54",
   "pins" : [
     {
       "identity" : "gzipswift",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "31c4dd39bcdc07eaa42a384bdc88ea599022b800",
         "version" : "1.1.2"
+      }
+    },
+    {
+      "identity" : "mlx-outil",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/rudrankriyam/MLX-Outil.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "aa120f6fb8f7ee08c798e01bd2f97e854940b73b"
       }
     },
     {
