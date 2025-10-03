@@ -5,7 +5,7 @@ MLX Outil is a multiplatform Swift project to show tool usage with Qwen 3 1.7B m
 The name **MLX Outil** is derived from the French word *outil*, which means "tool."
 
 ![Platforms](https://img.shields.io/badge/Platforms-iOS%2017.0+%20|%20macOS%2014.0+%20|%20visionOS%201.0+-lightgrey)
-![Swift](https://img.shields.io/badge/Swift-6.0-orange)
+![Swift](https://img.shields.io/badge/Swift-6.2-orange)
 ![MLX](https://img.shields.io/badge/MLX-latest-blue)
 
 ## Support
