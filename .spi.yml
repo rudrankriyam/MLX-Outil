@@ -1,0 +1,14 @@
+version: 1
+metadata:
+  title: "MLX Tools"
+  summary: "Modular MLX Swift tools package for on-device LLM integrations across Apple platforms."
+  topics:
+    - machine-learning
+    - mlx
+    - swift
+builder:
+  configs:
+    - platform: macos
+      swift_version: "6.2"
+    - platform: ios
+      swift_version: "6.2"
