@@ -1,4 +1,6 @@
 # MLX Outil
+[![Star History Chart](https://api.star-history.com/svg?repos=rudrankriyam/MLX-Outil&type=Date)](https://star-history.com/#rudrankriyam/MLX-Outil&Date)
+
 
 MLX Outil is a multiplatform Swift project to show tool usage with Qwen 3 1.7B model using MLX Swift across iOS, macOS, and visionOS platforms.
 
