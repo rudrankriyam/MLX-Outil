@@ -12,13 +12,13 @@ let package = Package(
       targets: ["MLXTools"])
   ],
   dependencies: [
-    .package(url: "https://github.com/ml-explore/mlx-swift-examples", branch: "main")
+    .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMinor(from: "2.30.3"))
   ],
   targets: [
     .target(
       name: "MLXTools",
       dependencies: [
-        .product(name: "MLXLMCommon", package: "mlx-swift-examples")
+        .product(name: "MLXLMCommon", package: "mlx-swift-lm")
       ],
       path: "Sources/MLXTools"
     )

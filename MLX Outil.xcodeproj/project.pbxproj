@@ -171,7 +171,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				8D758A832D5A57EF009AB6EC /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
-				0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
+				0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				0A60ACF02E0E6C93009DD9E6 /* XCRemoteSwiftPackageReference "MLX-Outil" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -524,12 +524,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
+		0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples.git";
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm.git";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.30.3;
 			};
 		};
 		0A60ACF02E0E6C93009DD9E6 /* XCRemoteSwiftPackageReference "MLX-Outil" */ = {
@@ -553,12 +553,12 @@
 /* Begin XCSwiftPackageProductDependency section */
 		0A60ACDF2E0E545F009DD9E6 /* MLXLLM */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			package = 0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
 			productName = MLXLLM;
 		};
 		0A60ACE12E0E545F009DD9E6 /* MLXLMCommon */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			package = 0A60ACDE2E0E545F009DD9E6 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
 			productName = MLXLMCommon;
 		};
 		0A60ACF12E0E6C93009DD9E6 /* MLXTools */ = {
