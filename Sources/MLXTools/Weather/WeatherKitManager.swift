@@ -19,6 +19,18 @@ public struct WeatherData: Sendable, Codable, Equatable {
   public let pressure: Double
   public let precipitationChance: Double
 
+  private enum CodingKeys: String, CodingKey {
+    case temperature
+    case condition
+    case humidity
+    case windSpeed
+    case feelsLike
+    case uvIndex
+    case visibility
+    case pressure
+    case precipitationChance
+  }
+
   public init(
     temperature: Double,
     condition: String,
@@ -39,6 +51,22 @@ public struct WeatherData: Sendable, Codable, Equatable {
     self.visibility = visibility
     self.pressure = pressure
     self.precipitationChance = Self.normalizedProbability(precipitationChance)
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(
+      temperature: try container.decode(Double.self, forKey: .temperature),
+      condition: try container.decode(String.self, forKey: .condition),
+      humidity: try container.decode(Double.self, forKey: .humidity),
+      windSpeed: try container.decode(Double.self, forKey: .windSpeed),
+      feelsLike: try container.decode(Double.self, forKey: .feelsLike),
+      uvIndex: try container.decode(Int.self, forKey: .uvIndex),
+      visibility: try container.decode(Double.self, forKey: .visibility),
+      pressure: try container.decode(Double.self, forKey: .pressure),
+      precipitationChance: try container.decode(
+        Double.self, forKey: .precipitationChance)
+    )
   }
 
   static func normalizedProbability(_ rawValue: Double) -> Double {

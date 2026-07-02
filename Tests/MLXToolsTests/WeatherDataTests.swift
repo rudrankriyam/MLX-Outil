@@ -51,4 +51,28 @@ final class WeatherDataTests: XCTestCase {
       accuracy: 0.0001
     )
   }
+
+  @MainActor
+  func testDecodedWeatherDataNormalizesPrecipitationChance() throws {
+    let json = """
+      {
+        "temperature": 18,
+        "condition": "Rain",
+        "humidity": 0.82,
+        "windSpeed": 12,
+        "feelsLike": 16.5,
+        "uvIndex": 1,
+        "visibility": 8000,
+        "pressure": 1011,
+        "precipitationChance": 250
+      }
+      """.data(using: .utf8)!
+
+    let weather = try JSONDecoder().decode(WeatherData.self, from: json)
+    let output = OutputFormatter.formatWeatherData(weather)
+
+    XCTAssertEqual(weather.precipitationChance, 1.0)
+    XCTAssertTrue(output.contains("Precipitation Chance: 100%"))
+    XCTAssertFalse(output.contains("250%"))
+  }
 }
