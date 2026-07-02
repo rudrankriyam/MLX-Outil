@@ -38,4 +38,17 @@ final class WeatherDataTests: XCTestCase {
     XCTAssertEqual(weather.precipitationChance, 0.25)
     XCTAssertEqual(WeatherData.normalizedProbability(2.5), 0.025, accuracy: 0.0001)
   }
+
+  func testOpenMeteoPercentageProbabilityUsesPercentScale() {
+    XCTAssertEqual(
+      WeatherData.normalizedPercentageProbability(1.0),
+      0.01,
+      accuracy: 0.0001
+    )
+    XCTAssertEqual(
+      WeatherData.normalizedPercentageProbability(250.0),
+      1.0,
+      accuracy: 0.0001
+    )
+  }
 }

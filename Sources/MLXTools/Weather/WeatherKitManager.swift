@@ -60,6 +60,14 @@ public struct WeatherData: Sendable, Codable, Equatable {
 
     return 1.0
   }
+
+  static func normalizedPercentageProbability(_ rawValue: Double) -> Double {
+    guard rawValue.isFinite else {
+      return 0.0
+    }
+
+    return min(max(rawValue, 0.0), 100.0) / 100.0
+  }
 }
 
 @MainActor
@@ -194,7 +202,8 @@ public class WeatherKitManager {
         uvIndex: 0,
         visibility: 0,
         pressure: response.current.pressure,
-        precipitationChance: response.hourly?.precipitationProbability.first ?? 0.0
+        precipitationChance: WeatherData.normalizedPercentageProbability(
+          response.hourly?.precipitationProbability.first ?? 0.0)
       )
     } catch {
       Logger.log("OpenMeteo request failed: \(error)", type: "ERROR")
