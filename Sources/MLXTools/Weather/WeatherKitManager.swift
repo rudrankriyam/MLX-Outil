@@ -38,7 +38,27 @@ public struct WeatherData: Sendable, Codable, Equatable {
     self.uvIndex = uvIndex
     self.visibility = visibility
     self.pressure = pressure
-    self.precipitationChance = precipitationChance
+    self.precipitationChance = Self.normalizedProbability(precipitationChance)
+  }
+
+  static func normalizedProbability(_ rawValue: Double) -> Double {
+    guard rawValue.isFinite else {
+      return 0.0
+    }
+
+    if rawValue <= 0.0 {
+      return 0.0
+    }
+
+    if rawValue <= 1.0 {
+      return rawValue
+    }
+
+    if rawValue <= 100.0 {
+      return rawValue / 100.0
+    }
+
+    return 1.0
   }
 }
 
@@ -119,13 +139,13 @@ public class WeatherKitManager {
 
   private struct OpenMeteoResponse: Codable {
     let current: CurrentWeather
+    let hourly: HourlyForecast?
 
     struct CurrentWeather: Codable {
       let temperature: Double
       let windspeed: Double
       let relativehumidity: Double
       let apparentTemperature: Double
-      let precipitation: Double
       let pressure: Double
 
       enum CodingKeys: String, CodingKey {
@@ -133,8 +153,15 @@ public class WeatherKitManager {
         case windspeed = "windspeed_10m"
         case relativehumidity = "relative_humidity_2m"
         case apparentTemperature = "apparent_temperature"
-        case precipitation
         case pressure = "surface_pressure"
+      }
+    }
+
+    struct HourlyForecast: Codable {
+      let precipitationProbability: [Double]
+
+      enum CodingKeys: String, CodingKey {
+        case precipitationProbability = "precipitation_probability"
       }
     }
   }
@@ -147,7 +174,7 @@ public class WeatherKitManager {
     )
 
     let urlString =
-      "\(openMeteoBaseURL)?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,precipitation,windspeed_10m"
+      "\(openMeteoBaseURL)?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&current=temperature_2m,relative_humidity_2m,apparent_temperature,surface_pressure,windspeed_10m&hourly=precipitation_probability&forecast_hours=1"
 
     guard let url = URL(string: urlString) else {
       throw WeatherKitError.weatherDataUnavailable
@@ -167,7 +194,7 @@ public class WeatherKitManager {
         uvIndex: 0,
         visibility: 0,
         pressure: response.current.pressure,
-        precipitationChance: response.current.precipitation
+        precipitationChance: response.hourly?.precipitationProbability.first ?? 0.0
       )
     } catch {
       Logger.log("OpenMeteo request failed: \(error)", type: "ERROR")
