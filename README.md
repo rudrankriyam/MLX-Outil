@@ -75,11 +75,20 @@ The package is designed to be reusable and follows MLX naming conventions, makin
 
 #### Swift Package Manager
 
-Add MLXTools as a dependency in your `Package.swift`:
+Add this repository as a dependency in your `Package.swift` and depend on the
+`MLXTools` product:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/MLXTools", branch: "main")
+    .package(url: "https://github.com/rudrankriyam/MLX-Outil.git", branch: "main")
+],
+targets: [
+    .target(
+        name: "YourTarget",
+        dependencies: [
+            .product(name: "MLXTools", package: "MLX-Outil")
+        ]
+    )
 ]
 ```
 
@@ -94,19 +103,15 @@ For local development, you can add the package as a local dependency:
 
 ```swift
 dependencies: [
-    .package(path: "../MLXTools")
+    .package(path: "../MLX-Outil")
 ]
 ```
 
 ## Usage
 
-### Basic App Usage
-
-```swift
-// Initialize view with SwiftUI
-MLXOutilView()
-    .environmentObject(MLXModel())
-```
+The reusable Swift package in this repository is `MLXTools`. The bundled Xcode
+app is a demo shell for exercising those tools with MLXLMCommon, not a separate
+public app framework.
 
 ### MLXTools Usage Examples
 
@@ -122,6 +127,10 @@ print("Temperature: \(weather.temperature)°C")
 // Using the tool definition for LLM integration
 let weatherTool = weatherTool // Pre-configured tool
 ```
+
+WeatherKit requires app entitlements. If WeatherKit is unavailable, the demo
+falls back to OpenMeteo and reports the first available hourly precipitation
+probability when OpenMeteo returns one.
 
 #### Health Data
 
