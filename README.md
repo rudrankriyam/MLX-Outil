@@ -312,5 +312,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 For questions and support, please open an issue in the repository.
-
-[![Star History Chart](https://api.star-history.com/svg?repos=rudrankriyam/MLX-Outil&type=Date)](https://star-history.com/#rudrankriyam/MLX-Outil&Date)
